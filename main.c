@@ -79,6 +79,23 @@ void read_romfs_task(void *pvParameters)
 	while (1);
 }
 
+void queue_str_task(const char *str)
+{
+	int msg_len = 0;
+	
+	//Calculate the length of the string
+	while(str[msg_len] != '\0')
+		msg_len++;
+
+	fio_write(1, str, msg_len);
+}
+
+void shell_task()
+{
+	queue_str_task("User > ");
+	while(1);
+}
+
 int main()
 {
 	init_rs232();
@@ -94,9 +111,9 @@ int main()
 	 * the RS232. */
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
 
-	/* Create a task to output text read from romfs. */
-	xTaskCreate(read_romfs_task,
-	            (signed portCHAR *) "Read romfs",
+	/* Basic shell. */
+	xTaskCreate(shell_task,
+	            (signed portCHAR *) "Shell",
 	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
 
 	/* Start running the tasks. */
