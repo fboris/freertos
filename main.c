@@ -17,7 +17,6 @@ extern const char _sromfs;
 static void setup_hardware();
 
 volatile xSemaphoreHandle serial_tx_wait_sem = NULL;
-volatile xSemaphoreHandle serial_rx_wait_sem = NULL;
 
 volatile char receive_char = 0;
 
@@ -140,7 +139,6 @@ int main()
 	/* Create the queue used by the serial task.  Messages for write to
 	 * the RS232. */
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
-	vSemaphoreCreateBinary(serial_rx_wait_sem);
 
 	/* Basic shell. */
 	xTaskCreate(shell_task,
