@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QEMU_STM32=../qemu_stm32/arm-softmmu/qemu-system-arm
+QEMU_STM32=~/workspace/qemu_stm32/arm-softmmu/qemu-system-arm
 
 CUR=`dirname $0`
 
