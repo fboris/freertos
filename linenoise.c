@@ -5,12 +5,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
 #include "linenoise.h"  
 
+#include "main.h"
+
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
-#define LINENOISE_MAX_LINE 4096
+#define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment
 
 struct linenoiseState {       
     char *buf;          /* Edited line buffer. */      
@@ -25,6 +26,10 @@ struct linenoiseState {
     int history_index;  /* The history index we are currently editing. */                                        
 };
 
+int linenoiseEditInsert(struct linenoiseState *l, int c) {
+
+}
+
 static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 {
     struct linenoiseState l;
@@ -32,20 +37,25 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     l.buf = buf;
     l.buflen = buflen;
     l.prompt = prompt;
-    l.plen = strlen(prompt);
+    //l.plen = strlen(prompt);
     l.oldpos = l.pos = 0;
     l.len = 0;
-    l.cols = getColumns();
+    //l.cols = getColumns();
     l.maxrows = 0;
     l.history_index = 0;
 
+    queue_str_task(prompt);
     while(1) {
 	char c;
+	char buf_char[2] = {'\0'};
+	
+	c = receive_byte();	
+	buf_char[0] = c;
 
-	//c = receive_data();
+	queue_str_task(buf_char);
 
 	//? -> completionCallback, maybe need to check
-
+#ifdef BLOCK
 	switch(c) {
 	case 13:    /* enter */
 	    //Handle history
@@ -75,7 +85,8 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
         case 27:    /* escape sequence */
 	    // ...
 	default:
-            //...
+	    if (linenoiseEditInsert(&l,c)) return -1;
+	    break;            
             break;
         case 21: /* Ctrl+u, delete the whole line. */
 	    //...
@@ -96,6 +107,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 	    //...
 	    break;
 	}
+#endif
     }
     return l.len;
 }
@@ -103,15 +115,10 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
-    if (buflen == 0) {
-        errno = EINVAL;
-        return -1;
-    }
-
-    //Read from USART
-
     count = linenoiseEdit(buf, buflen, prompt);
-    //print new line
+    queue_str_task("\n");
+    
+    return count;
 }
 
 char *linenoise(const char *prompt) {
@@ -120,5 +127,5 @@ char *linenoise(const char *prompt) {
 
     count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
     if (count == -1) return NULL;
-    return strdup(buf);
+    return /*strdup(buf);*/ 0; //Need to implement strdup or allocate enough chars
 }

@@ -12,6 +12,9 @@
 #include "filesystem.h"
 #include "fio.h"
 
+/* Linenoise and shell includes. */
+#include "linenoise.h"
+
 extern const char _sromfs;
 
 static void setup_hardware();
@@ -73,7 +76,7 @@ void send_byte(char ch)
 
 char receive_byte()
 {
-	char buf;
+	char buf = 0;
 
 	if(receive_char) {
 		buf = receive_char;
@@ -112,16 +115,7 @@ void queue_str_task(const char *str)
 
 void shell_task()
 {
-	queue_str_task("User > ");
-
-	char buf[2];
-	buf[1] = '\0';
-
-	while(1) {
-		buf[0] = receive_byte();
-		queue_str_task(buf);
-	}
-
+	char shell_str = linenoise("linenoise > ");
 	while(1);
 }
 
