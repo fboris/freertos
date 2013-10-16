@@ -11,7 +11,12 @@
 #include "main.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
-#define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment
+#define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
+
+static int mlmode = 0;  /* Multi line mode. Default is single line. */
+
+char (*serial_getc)() = receive_byte;
+void (*serial_send_str)(const char *str) = queue_str_task;
 
 struct linenoiseState {       
     char *buf;          /* Edited line buffer. */      
@@ -26,8 +31,68 @@ struct linenoiseState {
     int history_index;  /* The history index we are currently editing. */                                        
 };
 
-int linenoiseEditInsert(struct linenoiseState *l, int c) {
+static void refreshSingleLine(struct linenoiseState *l) {
+    size_t plen = strlen(l->prompt);
+    char *buf = l->buf;
+    size_t len = l->len;
+    size_t pos = l->pos;
 
+    while((plen+pos) >= l->cols) {
+        buf++;
+        len--;
+        pos--;
+    }
+    while (plen+len > l->cols) {
+        len--;
+    }
+
+    /* Cursor to left edge */ 
+    serial_send_str("\x1b[0G");
+    /* Write the prompt and the current buffer content */
+    serial_send_str(l->prompt);
+    serial_send_str(buf);
+    /* Erase to right */
+    serial_send_str("\x1b[0K");
+    /* Move cursor to original position. */
+    char sq[] = "\x1b[0G\x1b[0C";
+    sq[10] = (int)(pos+plen);  //Set the count of moving cursor
+    serial_send_str(sq);
+}
+
+static void refreshLine(struct linenoiseState *l) {
+    if (mlmode) {
+        //refreshMultiLine(l);
+    } else {
+        refreshSingleLine(l);
+    }
+}
+
+int linenoiseEditInsert(struct linenoiseState *l, int c) {
+    if (l->len < l->buflen) {
+        if (l->len == l->pos) {
+            l->buf[l->pos] = c;
+            l->pos++;
+            l->len++;
+	    l->buf[l->len] = '\0';
+            if ((!mlmode && l->plen+l->len < l->cols) /* || mlmode */) {
+                /* Avoid a full update of the line in the
+                 * trivial case. */
+		char buf_char[2] = {'\0'};
+		buf_char[0] = c;
+		serial_send_str(buf_char);
+	    } else {
+		refreshLine(l);
+	    }
+    	}
+    } else {
+            //memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);   //Maybe need to implement this function
+            l->buf[l->pos] = c;
+            l->len++;
+            l->pos++;
+            l->buf[l->len] = '\0';
+	    refreshLine(l);
+    }
+    return 0;
 }
 
 static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
@@ -37,25 +102,26 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     l.buf = buf;
     l.buflen = buflen;
     l.prompt = prompt;
-    //l.plen = strlen(prompt);
+    l.plen = strlen(prompt);
     l.oldpos = l.pos = 0;
     l.len = 0;
-    //l.cols = getColumns();
+    l.cols = 80;
     l.maxrows = 0;
     l.history_index = 0;
 
-    queue_str_task(prompt);
+    /* Buffer starts empty. */
+    buf[0] = '\0';
+    buflen--; /* Make sure there is always space for the nulterm */
+
+    serial_send_str(prompt);
     while(1) {
 	char c;
 	char buf_char[2] = {'\0'};
 	
-	c = receive_byte();	
+	c = serial_getc();	
 	buf_char[0] = c;
 
-	queue_str_task(buf_char);
-
 	//? -> completionCallback, maybe need to check
-#ifdef BLOCK
 	switch(c) {
 	case 13:    /* enter */
 	    //Handle history
@@ -85,9 +151,10 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
         case 27:    /* escape sequence */
 	    // ...
 	default:
-	    if (linenoiseEditInsert(&l,c)) return -1;
-	    break;            
-            break;
+	    if(!c) //avoid the NULL byte received from the USART
+		break;
+            if (linenoiseEditInsert(&l,c)) return -1;
+	    break;
         case 21: /* Ctrl+u, delete the whole line. */
 	    //...
 	    break;
@@ -107,7 +174,6 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 	    //...
 	    break;
 	}
-#endif
     }
     return l.len;
 }
@@ -116,7 +182,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     count = linenoiseEdit(buf, buflen, prompt);
-    queue_str_task("\n");
+    serial_send_str("\n\r");
     
     return count;
 }
