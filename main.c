@@ -104,19 +104,17 @@ void read_romfs_task(void *pvParameters)
 
 void queue_str_task(const char *str)
 {
-	int msg_len = 0;
-	
-	//Calculate the length of the string
-	while(str[msg_len] != '\0')
-		msg_len++;
+	int msg_len = strlen(str);	
 
 	fio_write(1, str, msg_len);
 }
 
 void shell_task()
 {
-	char shell_str = linenoise("linenoise > ");
-	while(1);
+	char *shell_str;
+	while(1) {
+		shell_str = linenoise("linenoise > ");
+	}
 }
 
 int main()
