@@ -100,7 +100,10 @@ qemudbg: main.bin $(QEMU_STM32)
 		-kernel main.bin
 		
 qemuauto: main.bin $(QEMU_STM32)
-	bash emulate.sh main.bin
-
+	$(QEMU_STM32) -M stm32-p103 \
+	              -kernel main.bin \
+	              -parallel none \
+		      -serial stdio \
+	              -monitor tcp:localhost:4444,server,nowait
 clean:
 	rm -f *.o *.elf *.bin *.list mkromfs
