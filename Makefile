@@ -98,7 +98,13 @@ qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
 		-kernel main.bin
-		
+
+gdbauto: main.bin
+	$(QEMU_STM32) -M stm32-p103 \
+		-gdb tcp::3333 -S \
+		-kernel main.bin  &
+	$(CROSS_COMPILE)gdb -x gdb.in 
+
 qemuauto: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 	              -kernel main.bin \
