@@ -15,7 +15,7 @@
 
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
 
-/* USART I/O callback functions */
+/* USART read/write callback functions */
 char (*serial_getc)();
 void (*serial_putc)(char ch);
 void (*serial_puts)(const char *str);
@@ -62,8 +62,10 @@ static void refreshSingleLine(struct linenoiseState *l) {
     /* Erase to right */
     serial_puts("\x1b[0K");
     /* Move cursor to original position. */
-    char sq[] = "\x1b[0G\x1b[0C";
-    sq[10] = (int)(pos+plen);  //Set the count of moving cursor
+    char sq[] = "\x1b[0G\x1b[12C"; //the max columes of Terminal environment is 80
+    /* Set the count of moving cursor */
+    sq[6] = (pos+plen) / 10 + 0x30;  
+    sq[7] = (pos+plen) % 10 + 0x30;
     serial_puts(sq);
 }
 
@@ -91,7 +93,7 @@ int linenoiseEditInsert(struct linenoiseState *l, int c) {
 	    }
     	}
     } else {
-            //memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);   //Maybe need to implement this function
+            memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);
             l->buf[l->pos] = c;
             l->len++;
             l->pos++;
@@ -99,6 +101,30 @@ int linenoiseEditInsert(struct linenoiseState *l, int c) {
 	    refreshLine(l);
     }
     return 0;
+}
+
+void linenoiseEditMoveLeft(struct linenoiseState *l) {
+    if (l->pos > 0) {
+        l->pos--;
+        refreshLine(l);
+    }
+}
+
+void linenoiseEditMoveRight(struct linenoiseState *l) {
+    if (l->pos != l->len) {
+        l->pos++;
+        refreshLine(l);
+    }
+}
+
+void linenoiseEditBackspace(struct linenoiseState *l) {
+    if (l->pos > 0 && l->len > 0) {
+        memmove(l->buf+l->pos-1,l->buf+l->pos,l->len-l->pos);
+        l->pos--;
+        l->len--;
+        l->buf[l->len] = '\0';
+        refreshLine(l);
+    }
 }
 
 static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
@@ -119,7 +145,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     serial_puts(prompt);
     while(1) {
 	char c;
-	
+	char seq[2] = {0};	
 	c = serial_getc();	
 
 	//? -> completionCallback, maybe need to check
@@ -129,7 +155,8 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 	    return (int)l.len;	    
 	case 127:   /* backspace */	
 	case 8:     /* ctrl-h */
-	    //linenoiseEditBackspace(&l);
+	    linenoiseEditBackspace(&l);
+	    break;
         case 4:     /* ctrl-d, remove char at right of cursor, or of the
                        line is empty, act as end-of-file. */
 	    //...
@@ -138,10 +165,10 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 	    //...
 	    break;
         case 2:     /* ctrl-b */
-            //...
+            linenoiseEditMoveLeft(&l);
             break;
         case 6:     /* ctrl-f */
-            //...
+            linenoiseEditMoveRight(&l);
             break;
         case 16:    /* ctrl-p */
             //...
@@ -150,7 +177,16 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             //...
             break;
         case 27:    /* escape sequence */
-	    // ...
+	    //seq[0] = serial_getc(); //Wrong!
+	    //seq[1] = serial_getc(); //Wrong!
+	    /* Need to implement reading 2 bytes from USART at here */
+            if (seq[0] == 91 && seq[1] == 68) {
+                /* Left arrow */
+                linenoiseEditMoveLeft(&l);
+            } else if (seq[0] == 91 && seq[1] == 67) {
+                /* Right arrow */
+                linenoiseEditMoveRight(&l);
+	    }
 	default:
 	    if(!c) //avoid the NULL byte which received from the USART
 		break;
