@@ -89,11 +89,14 @@ char receive_byte()
 
 void shell_task(void *pvParameters)
 {
-	char * buf = "hello!";
+	char buf[] = {0,0} ;
+	char ch;
+	fio_write(1, "hello!", 7);
 	do {
-		//Write buffer to fd 1 (stdout, through uart)
-		fio_write(1, buf, 7);
-	} while (0);
+		fio_read(0, &ch, 1 );
+		buf[0] = ch;
+		fio_write(1, buf, 1);
+	} while (1);
 	
 	while (1);
 }
