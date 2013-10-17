@@ -15,8 +15,16 @@
 
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
 
-char (*serial_getc)() = receive_byte;
-void (*serial_send_str)(const char *str) = queue_str_task;
+/* USART I/O callback functions */
+char (*serial_getc)();
+void (*serial_putc)(char ch);
+void (*serial_puts)(const char *str);
+
+void linenoiseCallbackFuncInit() {
+	serial_getc = receive_byte;
+	serial_putc = send_byte;
+	serial_puts = queue_str_task;
+}
 
 struct linenoiseState {       
     char *buf;          /* Edited line buffer. */      
@@ -47,16 +55,16 @@ static void refreshSingleLine(struct linenoiseState *l) {
     }
 
     /* Cursor to left edge */ 
-    serial_send_str("\x1b[0G");
+    serial_puts("\x1b[0G");
     /* Write the prompt and the current buffer content */
-    serial_send_str(l->prompt);
-    serial_send_str(buf);
+    serial_puts(l->prompt);
+    serial_puts(buf);
     /* Erase to right */
-    serial_send_str("\x1b[0K");
+    serial_puts("\x1b[0K");
     /* Move cursor to original position. */
     char sq[] = "\x1b[0G\x1b[0C";
     sq[10] = (int)(pos+plen);  //Set the count of moving cursor
-    serial_send_str(sq);
+    serial_puts(sq);
 }
 
 static void refreshLine(struct linenoiseState *l) {
@@ -77,9 +85,7 @@ int linenoiseEditInsert(struct linenoiseState *l, int c) {
             if ((!mlmode && l->plen+l->len < l->cols) /* || mlmode */) {
                 /* Avoid a full update of the line in the
                  * trivial case. */
-		char buf_char[2] = {'\0'};
-		buf_char[0] = c;
-		serial_send_str(buf_char);
+		serial_putc(c);
 	    } else {
 		refreshLine(l);
 	    }
@@ -97,29 +103,24 @@ int linenoiseEditInsert(struct linenoiseState *l, int c) {
 
 static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 {
-    struct linenoiseState l;
-
-    l.buf = buf;
-    l.buflen = buflen;
-    l.prompt = prompt;
-    l.plen = strlen(prompt);
-    l.oldpos = l.pos = 0;
-    l.len = 0;
-    l.cols = 80;
-    l.maxrows = 0;
-    l.history_index = 0;
+    struct linenoiseState l = {
+        .buf = buf, .buflen = buflen,
+        .prompt = prompt, .plen = strlen(prompt),
+        .oldpos = 0, .pos = 0,
+        .len = 0,
+        .cols = 80, .maxrows = 0,
+        .history_index = 0,
+    };
 
     /* Buffer starts empty. */
     buf[0] = '\0';
     buflen--; /* Make sure there is always space for the nulterm */
 
-    serial_send_str(prompt);
+    serial_puts(prompt);
     while(1) {
 	char c;
-	char buf_char[2] = {'\0'};
 	
 	c = serial_getc();	
-	buf_char[0] = c;
 
 	//? -> completionCallback, maybe need to check
 	switch(c) {
@@ -151,7 +152,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
         case 27:    /* escape sequence */
 	    // ...
 	default:
-	    if(!c) //avoid the NULL byte received from the USART
+	    if(!c) //avoid the NULL byte which received from the USART
 		break;
             if (linenoiseEditInsert(&l,c)) return -1;
 	    break;
@@ -182,7 +183,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     count = linenoiseEdit(buf, buflen, prompt);
-    serial_send_str("\n\r");
+    serial_puts("\n\r");
     
     return count;
 }
@@ -190,6 +191,8 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
 char *linenoise(const char *prompt) {
     char buf[LINENOISE_MAX_LINE];
     int count;
+
+    linenoiseCallbackFuncInit();
 
     count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
     if (count == -1) return NULL;

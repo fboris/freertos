@@ -20,6 +20,7 @@ extern const char _sromfs;
 static void setup_hardware();
 
 volatile xSemaphoreHandle serial_tx_wait_sem = NULL;
+xSemaphoreHandle receive_byte_sem = NULL;
 
 volatile char receive_char = 0;
 
@@ -78,9 +79,12 @@ char receive_byte()
 {
 	char buf = 0;
 
-	if(receive_char) {
-		buf = receive_char;
-		receive_char = 0; //Clean the buffer of the USART
+	if(xSemaphoreTake(receive_byte_sem, portMAX_DELAY)) {
+		if(receive_char) {
+			buf = receive_char;
+			receive_char = 0; //Clean the buffer of the USART
+		}
+		xSemaphoreGive(receive_byte_sem);	
 	}
 	
 	return buf;
@@ -131,6 +135,9 @@ int main()
 	/* Create the queue used by the serial task.  Messages for write to
 	 * the RS232. */
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
+
+	/* Create the mutex to protect the receive char */
+	receive_byte_sem = xSemaphoreCreateMutex();
 
 	/* Basic shell. */
 	xTaskCreate(shell_task,
