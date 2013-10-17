@@ -63,18 +63,14 @@ void send_byte(char ch)
 	USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
 }
 
-void read_romfs_task(void *pvParameters)
+void shell_task(void *pvParameters)
 {
-	char buf[128];
-	size_t count;
-	int fd = fs_open("/romfs/test.txt", 0, O_RDONLY);
+	char * buf = "hello!";
 	do {
-		//Read from /romfs/test.txt to buffer
-		count = fio_read(fd, buf, sizeof(buf));
 		
 		//Write buffer to fd 1 (stdout, through uart)
-		fio_write(1, buf, count);
-	} while (count);
+		fio_write(1, buf, 7);
+	} while (0);
 	
 	while (1);
 }
@@ -95,8 +91,8 @@ int main()
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
 
 	/* Create a task to output text read from romfs. */
-	xTaskCreate(read_romfs_task,
-	            (signed portCHAR *) "Read romfs",
+	xTaskCreate(shell_task,
+	            (signed portCHAR *) "Shell ENV",
 	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
 
 	/* Start running the tasks. */
