@@ -13,34 +13,48 @@
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
 
-static int mlmode = 0;  /* Multi line mode. Default is single line. */
-
-/* USART read/write callback functions */
-char (*serial_getc)();
-void (*serial_putc)(char ch);
-void (*serial_puts)(const char *str);
-
-void linenoiseCallbackFuncInit() {
-	serial_getc = receive_byte;
-	serial_putc = send_byte;
-	serial_puts = queue_str_task;
-}
-
-struct linenoiseState {       
-    char *buf;          /* Edited line buffer. */      
-    size_t buflen;      /* Edited line buffer size. */ 
-    const char *prompt; /* Prompt to display. */       
+struct linenoiseState {
+    char *buf;          /* Edited line buffer. */
+    size_t buflen;      /* Edited line buffer size. */
+    const char *prompt; /* Prompt to display. */
     size_t plen;        /* Prompt length. */
-    size_t pos;         /* Current cursor position. */ 
+    size_t pos;         /* Current cursor position. */
     size_t oldpos;      /* Previous refresh cursor position. */
     size_t len;         /* Current edited line length. */
     size_t cols;        /* Number of columns in terminal. */
     size_t maxrows;     /* Maximum num of rows used so far (multiline mode) */
-    int history_index;  /* The history index we are currently editing. */                                        
+    int history_index;  /* The history index we are currently editing. */
 };
 
+/* USART read/write functions structure */
+typedef struct {
+    char (*getch)(); //If declare as getc will cause naming conflict
+    void (*putch)(char ch); //If declare as putc will cause naming conflict
+    void (*puts)(const char *str);
+} serial_ops;
+
+void send_string(const char *str) {
+	int msg_len = strlen(str);
+
+	int cur;
+	for(cur = 0; cur < msg_len; cur++) {
+		send_byte(str[cur]);
+	}
+}
+
+
+static int mlmode = 0;  /* Multi line mode. Default is single line. */
+
+/* Serial read/write callback functions */
+serial_ops serial = {
+    .getch = receive_byte,
+    .putch = send_byte,
+    .puts = send_string
+};
+
+
 void linenoiseClearScreen(void) {
-	serial_puts("\x1b[H\x1b[2J");
+	serial.puts("\x1b[H\x1b[2J");
 }
 
 static void refreshSingleLine(struct linenoiseState *l) {
@@ -59,18 +73,18 @@ static void refreshSingleLine(struct linenoiseState *l) {
     }
 
     /* Cursor to left edge */ 
-    serial_puts("\x1b[0G");
+    serial.puts("\x1b[0G");
     /* Write the prompt and the current buffer content */
-    serial_puts(l->prompt);
-    serial_puts(buf);
+    serial.puts(l->prompt);
+    serial.puts(buf);
     /* Erase to right */
-    serial_puts("\x1b[0K");
+    serial.puts("\x1b[0K");
     /* Move cursor to original position. */
     char sq[] = "\x1b[0G\x1b[12C"; //the max columes of Terminal environment is 80
     /* Set the count of moving cursor */
     sq[6] = (pos+plen) / 10 + 0x30;  
     sq[7] = (pos+plen) % 10 + 0x30;
-    serial_puts(sq);
+    serial.puts(sq);
 }
 
 static void refreshLine(struct linenoiseState *l) {
@@ -91,7 +105,7 @@ int linenoiseEditInsert(struct linenoiseState *l, int c) {
             if ((!mlmode && l->plen+l->len < l->cols) /* || mlmode */) {
                 /* Avoid a full update of the line in the
                  * trivial case. */
-		serial_putc(c);
+		serial.putch(c);
 	    } else {
 		refreshLine(l);
 	    }
@@ -169,11 +183,11 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     buf[0] = '\0';
     buflen--; /* Make sure there is always space for the nulterm */
 
-    serial_puts(prompt);
+    serial.puts(prompt);
     while(1) {
 	char c;
 	char seq[2] = {0};	
-	c = serial_getc();	
+	c = serial.getch();	
 
 	//? -> completionCallback, maybe need to check
 	switch(c) {
@@ -259,7 +273,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     count = linenoiseEdit(buf, buflen, prompt);
-    serial_puts("\n\r");
+    serial.puts("\n\r");
     
     return count;
 }
@@ -267,8 +281,6 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
 char *linenoise(const char *prompt) {
     char buf[LINENOISE_MAX_LINE];
     int count;
-
-    linenoiseCallbackFuncInit();
 
     count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
     if (count == -1) return NULL;
