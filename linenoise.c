@@ -39,6 +39,10 @@ struct linenoiseState {
     int history_index;  /* The history index we are currently editing. */                                        
 };
 
+void linenoiseClearScreen(void) {
+	serial_puts("\x1b[H\x1b[2J");
+}
+
 static void refreshSingleLine(struct linenoiseState *l) {
     size_t plen = strlen(l->prompt);
     char *buf = l->buf;
@@ -117,6 +121,15 @@ void linenoiseEditMoveRight(struct linenoiseState *l) {
     }
 }
 
+void linenoiseEditDelete(struct linenoiseState *l) {
+    if (l->len > 0 && l->pos < l->len) {
+        memmove(l->buf+l->pos,l->buf+l->pos+1,l->len-l->pos-1);
+        l->len--;
+        l->buf[l->len] = '\0';
+        refreshLine(l);
+    }
+}
+
 void linenoiseEditBackspace(struct linenoiseState *l) {
     if (l->pos > 0 && l->len > 0) {
         memmove(l->buf+l->pos-1,l->buf+l->pos,l->len-l->pos);
@@ -125,6 +138,20 @@ void linenoiseEditBackspace(struct linenoiseState *l) {
         l->buf[l->len] = '\0';
         refreshLine(l);
     }
+}
+
+void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
+    size_t old_pos = l->pos;
+    size_t diff;
+
+    while (l->pos > 0 && l->buf[l->pos-1] == ' ')
+        l->pos--;
+    while (l->pos > 0 && l->buf[l->pos-1] != ' ')
+        l->pos--;
+    diff = old_pos - l->pos;
+    memmove(l->buf+l->pos,l->buf+old_pos,l->len-old_pos+1);
+    l->len -= diff;
+    refreshLine(l);
 }
 
 static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
@@ -159,8 +186,14 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 	    break;
         case 4:     /* ctrl-d, remove char at right of cursor, or of the
                        line is empty, act as end-of-file. */
-	    //...
-	    break;
+            if (l.len > 0) {
+                linenoiseEditDelete(&l);
+            } else {
+                //history_len--;
+                //free(history[history_len]);
+                return -1;
+            }
+            break;
         case 20:    /* ctrl-t, swaps current character with previous. */
 	    //...
 	    break;
@@ -193,22 +226,29 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             if (linenoiseEditInsert(&l,c)) return -1;
 	    break;
         case 21: /* Ctrl+u, delete the whole line. */
-	    //...
+            buf[0] = '\0';
+            l.pos = l.len = 0;
+            refreshLine(&l);
 	    break;
         case 11: /* Ctrl+k, delete from current to end of line. */
-	    //...
+            buf[l.pos] = '\0';
+            l.len = l.pos;
+            refreshLine(&l);
 	    break;
         case 1: /* Ctrl+a, go to the start of the line */
-	    //...
+            l.pos = 0;
+            refreshLine(&l);
 	    break;
         case 5: /* ctrl+e, go to the end of the line */
-	    //...
+            l.pos = l.len;
+            refreshLine(&l);
 	    break;
 	case 12: /* ctrl+l, clear screen */	
-	    //...
-	    break;
+            linenoiseClearScreen();        
+            refreshLine(&l);
+            break;
 	case 23: /* ctrl+w, delete previous word */
-	    //...
+	    linenoiseEditDeletePrevWord(&l);
 	    break;
 	}
     }
