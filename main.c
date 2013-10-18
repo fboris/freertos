@@ -79,12 +79,12 @@ char receive_byte()
 {
 	char buf = 0;
 
-	if(xSemaphoreTake(receive_byte_sem, portMAX_DELAY)) {
+	if(xSemaphoreTake(receive_byte_sem, portMAX_DELAY) == pdTRUE) {
 		if(receive_char) {
 			buf = receive_char;
 			receive_char = 0; //Clean the buffer of the USART
 		}
-		xSemaphoreGive(receive_byte_sem);	
+		xSemaphoreGive(receive_byte_sem);
 	}
 	
 	return buf;
