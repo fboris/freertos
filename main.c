@@ -95,7 +95,7 @@ void shell_task(void *pvParameters)
 	do {
 		fio_read(0, &ch, 1 );
 		buf[0] = ch;
-		fio_write(1, buf, 1);
+		puts(buf);
 	} while (1);
 	
 	while (1);

@@ -1,7 +1,9 @@
-#include <stddef.h>
+#include <string.h>
 #include <stdint.h>
+#include <stdarg.h> 
 #include <limits.h>
 
+#include "fio.h"
 #define ALIGN (sizeof(size_t))
 #define ONES ((size_t)-1/UCHAR_MAX)                                                                      
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
@@ -66,4 +68,30 @@ char *strncpy(char *dest, const char *src, size_t n)
 	unsigned char *d = dest;
 	while (n-- && (*d++ = *s++));
 	return dest;
+}
+
+
+size_t strlen(const char *s) __attribute__ ((naked));
+size_t strlen(const char *s)
+{
+	asm(
+		"	sub  r3, r0, #1			\n"
+        "strlen_loop:               \n"
+		"	ldrb r2, [r3, #1]!		\n"
+		"	cmp  r2, #0				\n"
+        "   bne  strlen_loop        \n"
+		"	sub  r0, r3, r0			\n"
+		"	bx   lr					\n"
+		:::
+	);
+}
+int puts(const char *msg)
+{
+    
+
+    	if (!msg) {
+        	return;
+    	}
+	fio_write(1, msg,strlen(msg));
+	return 1;
 }
