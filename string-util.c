@@ -70,6 +70,22 @@ char *strncpy(char *dest, const char *src, size_t n)
 	return dest;
 }
 
+int strcmp(const char *a, const char *b) __attribute__ ((naked));
+int strcmp(const char *a, const char *b)
+{
+	asm(
+        "strcmp_lop:                \n"
+        "   ldrb    r2, [r0],#1     \n"
+        "   ldrb    r3, [r1],#1     \n"
+        "   cmp     r2, #1          \n"
+        "   it      hi              \n"
+        "   cmphi   r2, r3          \n"
+        "   beq     strcmp_lop      \n"
+		"	sub     r0, r2, r3  	\n"
+        "   bx      lr              \n"
+		:::
+	);
+}
 
 size_t strlen(const char *s) __attribute__ ((naked));
 size_t strlen(const char *s)
@@ -85,6 +101,40 @@ size_t strlen(const char *s)
 		:::
 	);
 }
+
+/*
+This function is from zzz072
+*/
+#define itoa(val) itoa_base(val, 10)
+#define htoa(val) itoa_base(val, 16)
+
+static char* itoa_base(int val, int base)
+{
+    static char buf[32] = { 0 };
+    char has_minus = 0;
+    int i = 30;
+
+    /* Sepecial case: 0 */
+    if (val == 0) {
+        buf[1] = '0';
+        return &buf[1];
+    }
+
+    if (val < 0) {
+        val = -val;
+        has_minus = 1;
+    }
+
+    for (; val && (i - 1) ; --i, val /= base)
+        buf[i] = "0123456789abcdef"[val % base];
+
+    if (has_minus) {
+        buf[i] = '-';
+        return &buf[i];
+    }
+    return &buf[i + 1];
+}
+
 int puts(const char *msg)
 {
     
