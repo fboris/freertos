@@ -34,10 +34,9 @@ static void refreshLine(struct linenoiseState *l);
 typedef struct {
     char (*getch)(); //If declare as getc will cause naming conflict
     void (*putch)(char ch); //If declare as putc will cause naming conflict
-    void (*puts)(const char *str);
 } serial_ops;
 
-void send_string(const char *str) {
+void putstr(const char *str) {
 	int msg_len = strlen(str);
 
 	int cur;
@@ -52,13 +51,12 @@ static int mlmode = 0;  /* Multi line mode. Default is single line. */
 /* Serial read/write callback functions */
 serial_ops serial = {
     .getch = receive_byte,
-    .putch = send_byte,
-    .puts = send_string
+    .putch = send_byte
 };
 
 
 void linenoiseClearScreen(void) {
-    serial.puts("\x1b[H\x1b[2J");
+    putstr("\x1b[H\x1b[2J");
 }
 
 static void freeCompletions(linenoiseCompletions *lc) {
@@ -71,7 +69,7 @@ static void freeCompletions(linenoiseCompletions *lc) {
 
 
 static void linenoiseBeep(void) {
-    serial.puts("\x7");
+    putstr("\x7");
 }
 
 static int completeLine(struct linenoiseState *ls) {
@@ -161,18 +159,18 @@ static void refreshSingleLine(struct linenoiseState *l) {
     }
 
     /* Cursor to left edge */ 
-    serial.puts("\x1b[0G");
+    putstr("\x1b[0G");
     /* Write the prompt and the current buffer content */
-    serial.puts(l->prompt);
-    serial.puts(buf);
+    putstr(l->prompt);
+    putstr(buf);
     /* Erase to right */
-    serial.puts("\x1b[0K");
+    putstr("\x1b[0K");
     /* Move cursor to original position. */
     char sq[] = "\x1b[0G\x1b[12C"; //the max columes of Terminal environment is 80
     /* Set the count of moving cursor */
     sq[6] = (pos+plen) / 10 + 0x30;  
     sq[7] = (pos+plen) % 10 + 0x30;
-    serial.puts(sq);
+    putstr(sq);
 }
 
 static void refreshLine(struct linenoiseState *l) {
@@ -271,7 +269,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     buf[0] = '\0';
     buflen--; /* Make sure there is always space for the nulterm */
 
-    serial.puts(prompt);
+    putstr(prompt);
     while(1) {
 	char c;
 	char seq[2] = {0};	
@@ -369,7 +367,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     count = linenoiseEdit(buf, buflen, prompt);
-    serial.puts("\n\r");
+    putstr("\n\r");
     
     return count;
 }
