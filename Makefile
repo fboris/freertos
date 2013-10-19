@@ -18,6 +18,7 @@ all: main.bin
 
 main.bin: test-romfs.o main.c linenoise.c
 	$(CROSS_COMPILE)gcc \
+		-ffreestanding \
 		-I. -I$(FREERTOS_INC) -I$(FREERTOS_PORT_INC) \
 		-I$(CODEBASE)/libraries/CMSIS/CM3/CoreSupport \
 		-I$(CODEBASE)/libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x \
@@ -57,7 +58,8 @@ main.bin: test-romfs.o main.c linenoise.c
 		\
 		linenoise.c \
 		\
-		string.c
+		string.c \
+		memory_op.c
 	$(CROSS_COMPILE)ld -Tmain.ld -nostartfiles -o main.elf \
 		core_cm3.o \
 		system_stm32f10x.o \
@@ -82,7 +84,8 @@ main.bin: test-romfs.o main.c linenoise.c
 		\
 		linenoise.o \
 		\
-		string.o
+		string.o \
+		memory_op.o
 	$(CROSS_COMPILE)objcopy -Obinary main.elf main.bin
 	$(CROSS_COMPILE)objdump -S main.elf > main.list
 
