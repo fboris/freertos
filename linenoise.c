@@ -13,6 +13,8 @@
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
 
+static linenoiseCompletionCallback *completionCallback = NULL;
+
 struct linenoiseState {
     char *buf;          /* Edited line buffer. */
     size_t buflen;      /* Edited line buffer size. */
@@ -25,6 +27,8 @@ struct linenoiseState {
     size_t maxrows;     /* Maximum num of rows used so far (multiline mode) */
     int history_index;  /* The history index we are currently editing. */
 };
+
+static void refreshLine(struct linenoiseState *l);
 
 /* USART read/write functions structure */
 typedef struct {
@@ -54,7 +58,91 @@ serial_ops serial = {
 
 
 void linenoiseClearScreen(void) {
-	serial.puts("\x1b[H\x1b[2J");
+    serial.puts("\x1b[H\x1b[2J");
+}
+
+static void freeCompletions(linenoiseCompletions *lc) {
+    size_t i;
+    for (i = 0; i < lc->len; i++)  
+        vPortFree(lc->cvec[i]);    
+    if (lc->cvec != NULL)
+       vPortFree(lc->cvec);
+}
+
+
+static void linenoiseBeep(void) {
+    serial.puts("\x7");
+}
+
+static int completeLine(struct linenoiseState *ls) {
+    linenoiseCompletions lc = { 0, NULL };
+    int nwritten = 0;
+    char c = 0;
+
+    completionCallback(ls->buf,&lc);
+    if (lc.len == 0) {
+        linenoiseBeep();
+    } else {
+	size_t stop = 0, i = 0;
+
+	while(!stop) {
+	     /* Show completion or original buffer */
+            if (i < lc.len) {
+                struct linenoiseState saved = *ls;
+
+                ls->len = ls->pos = strlen(lc.cvec[i]);
+                ls->buf = lc.cvec[i];
+                refreshLine(ls);
+                ls->len = saved.len;
+                ls->pos = saved.pos;
+                ls->buf = saved.buf;
+            } else {
+                refreshLine(ls);
+            }
+
+	    c = serial.getch();
+
+            switch(c) {
+                case 9: /* tab */
+                    i = (i+1) % (lc.len+1);
+                    if (i == lc.len) linenoiseBeep();
+                    break;
+                case 27: /* escape */
+                    /* Re-show original buffer */
+                    if (i < lc.len) refreshLine(ls);
+                    //stop = 1;
+                    break;
+                default:
+                    /* Update buffer and return */
+                    if (i < lc.len) {
+			for(nwritten = 0; nwritten < ls->buflen; nwritten++) {
+				ls->buf[nwritten] = lc.cvec[i][nwritten];
+				if(lc.cvec[i][nwritten] == '\0')
+					break;	
+			}
+
+			ls->len = ls->pos = nwritten;
+                    }
+                    stop = 1;
+                    break;
+            }
+        }
+    }
+
+    freeCompletions(&lc);
+    return c; /* Return last read character */
+}
+
+void linenoiseSetCompletionCallback(linenoiseCompletionCallback *fn) {
+    completionCallback = fn;
+}
+
+void linenoiseAddCompletion(linenoiseCompletions *lc, char *str) {     
+    size_t len = strlen(str);
+    char *copy = (char *)pvPortMalloc(len+1);
+    memcpy(copy,str,len+1);
+    lc->cvec = (char**)pvPortRealloc(lc->cvec,sizeof(char*)*(lc->len+1));
+    lc->cvec[lc->len++] = copy;                                        
 }
 
 static void refreshSingleLine(struct linenoiseState *l) {
@@ -189,7 +277,15 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 	char seq[2] = {0};	
 	c = serial.getch();	
 
-	//? -> completionCallback, maybe need to check
+	/* Only autocomplete when the callback is set. */
+        if (c == 9 && completionCallback != NULL) {
+	    c = completeLine(&l);        
+            /* Return on errors */
+            if (c < 0) return l.len; 
+            /* Read next character when 0 */
+            if (c == 0) continue;      
+        }
+
 	switch(c) {
 	case 13:    /* enter */
 	    //Handle history
