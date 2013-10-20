@@ -4,10 +4,9 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include "linenoise.h"  
-
+#include "fio.h"
 #include "main.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
@@ -32,18 +31,31 @@ static void refreshLine(struct linenoiseState *l);
 
 /* USART read/write functions structure */
 typedef struct {
-    char (*getch)(); //If declare as getc will cause naming conflict
-    void (*putch)(char ch); //If declare as putc will cause naming conflict
+    char (*getch) (); //If declare as getc will cause naming conflict
+    void (*putch) (char ch); //If declare as putc will cause naming conflict
+    int (*puts) (const char *msg);
 } serial_ops;
+
+int puts_base(char* msg)
+{
+    if (!msg) {
+        return;
+    }
+    fio_write(1, msg, strlen(msg));
+    return 1;
+}
 
 char getch_base()
 {
     char ch;
     fio_read(0, &ch, 1);
+    return ch;
 }
+
+
 void putch_base(char ch)
 {
-    fio_write(0, &ch, 1);
+    fio_write(1, &ch, 1);
 }
 
 
@@ -53,12 +65,15 @@ static int mlmode = 0;  /* Multi line mode. Default is single line. */
 /* Serial read/write callback functions */
 serial_ops serial = {
     .getch = getch_base,
-    .putch = putch_base
+    .putch = putch_base,
+    .puts = puts_base
 };
 
 
 void linenoiseClearScreen(void) {
-    puts("\x1b[H\x1b[2J");
+
+    serial.puts("\x1b[H\x1b[2J");
+
 }
 
 static void freeCompletions(linenoiseCompletions *lc) {
@@ -71,7 +86,7 @@ static void freeCompletions(linenoiseCompletions *lc) {
 
 
 static void linenoiseBeep(void) {
-    puts("\x7");
+    serial.puts("\x7");
 }
 
 static int completeLine(struct linenoiseState *ls) {
@@ -161,18 +176,18 @@ static void refreshSingleLine(struct linenoiseState *l) {
     }
 
     /* Cursor to left edge */ 
-    puts("\x1b[0G");
+    serial.puts("\x1b[0G");
     /* Write the prompt and the current buffer content */
-    puts(l->prompt);
-    puts(buf);
+    serial.puts(l->prompt);
+    serial.puts(buf);
     /* Erase to right */
-    puts("\x1b[0K");
+    serial.puts("\x1b[0K");
     /* Move cursor to original position. */
     char sq[] = "\x1b[0G\x1b[12C"; //the max columes of Terminal environment is 80
     /* Set the count of moving cursor */
     sq[6] = (pos+plen) / 10 + 0x30;  
     sq[7] = (pos+plen) % 10 + 0x30;
-    puts(sq);
+    serial.puts(sq);
 }
 
 static void refreshLine(struct linenoiseState *l) {
@@ -274,7 +289,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     buf[0] = '\0';
     buflen--; /* Make sure there is always space for the nulterm */
 
-    puts(prompt);
+    serial.puts(prompt);
     while(1) {
     	char c;
     	char seq[2] = {0};	
@@ -374,7 +389,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     count = linenoiseEdit(buf, buflen, prompt);
-    puts("\n\r");
+    serial.puts("\n\r");
     
     return count;
 }

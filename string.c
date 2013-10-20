@@ -155,14 +155,3 @@ static char* itoa_base(int val, int base)
     }
     return &buf[i + 1];
 }
-
-int puts(const char *msg)
-{
-    
-
-    if (!msg) {
-        return;
-    }
-	fio_write(1, msg,strlen(msg));
-	return 1;
-}
