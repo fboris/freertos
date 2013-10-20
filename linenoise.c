@@ -74,10 +74,10 @@ static int completeLine(struct linenoiseState *ls) {
     if (lc.len == 0) {
         linenoiseBeep();
     } else {
-	size_t stop = 0, i = 0;
+	    size_t stop = 0, i = 0;
 
-	while(!stop) {
-	     /* Show completion or original buffer */
+    	while(!stop) {
+    	     /* Show completion or original buffer */
             if (i < lc.len) {
                 struct linenoiseState saved = *ls;
 
@@ -91,7 +91,7 @@ static int completeLine(struct linenoiseState *ls) {
                 refreshLine(ls);
             }
 
-	    c = serial.getch();
+	       c = serial.getch();
 
             switch(c) {
                 case 9: /* tab */
@@ -106,13 +106,13 @@ static int completeLine(struct linenoiseState *ls) {
                 default:
                     /* Update buffer and return */
                     if (i < lc.len) {
-			for(nwritten = 0; nwritten < ls->buflen; nwritten++) {
-				ls->buf[nwritten] = lc.cvec[i][nwritten];
-				if(lc.cvec[i][nwritten] == '\0')
-					break;	
-			}
+            			for(nwritten = 0; nwritten < ls->buflen; nwritten++) {
+            				ls->buf[nwritten] = lc.cvec[i][nwritten];
+            				if(lc.cvec[i][nwritten] == '\0')
+            					break;	
+            			}
 
-			ls->len = ls->pos = nwritten;
+                            ls->len = ls->pos = nwritten;
                     }
                     stop = 1;
                     break;
@@ -180,21 +180,24 @@ int linenoiseEditInsert(struct linenoiseState *l, int c) {
             l->buf[l->pos] = c;
             l->pos++;
             l->len++;
-	    l->buf[l->len] = '\0';
+            l->buf[l->len] = '\0';
             if ((!mlmode && l->plen+l->len < l->cols) /* || mlmode */) {
-                /* Avoid a full update of the line in the
-                 * trivial case. */
-		serial.putch(c);
-	    } else {
-		refreshLine(l);
-	    }
+                    /* Avoid a full update of the line in the
+                     * trivial case. */
+        		serial.putch(c);
+
+        	} else {
+
+        		refreshLine(l);
+
+    	    }
     	}
     } else {
-            memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);
-            l->buf[l->pos] = c;
-            l->len++;
-            l->pos++;
-            l->buf[l->len] = '\0';
+        memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);
+        l->buf[l->pos] = c;
+        l->len++;
+        l->pos++;
+        l->buf[l->len] = '\0';
 	    refreshLine(l);
     }
     return 0;
@@ -264,94 +267,95 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 
     puts(prompt);
     while(1) {
-	char c;
-	char seq[2] = {0};	
-	c = serial.getch();	
+    	char c;
+    	char seq[2] = {0};	
+    	c = serial.getch();	
 
-	/* Only autocomplete when the callback is set. */
+    	/* Only autocomplete when the callback is set. */
         if (c == 9 && completionCallback != NULL) {
-	    c = completeLine(&l);        
+            c = completeLine(&l);        
             /* Return on errors */
             if (c < 0) return l.len; 
             /* Read next character when 0 */
             if (c == 0) continue;      
         }
 
-	switch(c) {
-	case 13:    /* enter */
-	    //Handle history
-	    return (int)l.len;	    
-	case 127:   /* backspace */	
-	case 8:     /* ctrl-h */
-	    linenoiseEditBackspace(&l);
-	    break;
-        case 4:     /* ctrl-d, remove char at right of cursor, or of the
-                       line is empty, act as end-of-file. */
-            if (l.len > 0) {
-                linenoiseEditDelete(&l);
-            } else {
-                //history_len--;
-                //free(history[history_len]);
-                return -1;
-            }
-            break;
-        case 20:    /* ctrl-t, swaps current character with previous. */
-	    //...
-	    break;
-        case 2:     /* ctrl-b */
-            linenoiseEditMoveLeft(&l);
-            break;
-        case 6:     /* ctrl-f */
-            linenoiseEditMoveRight(&l);
-            break;
-        case 16:    /* ctrl-p */
-            //...
-            break;
-        case 14:    /* ctrl-n */
-            //...
-            break;
-        case 27:    /* escape sequence */
-	    //seq[0] = serial_getc(); //Wrong!
-	    //seq[1] = serial_getc(); //Wrong!
-	    /* Need to implement reading 2 bytes from USART at here */
-            if (seq[0] == 91 && seq[1] == 68) {
-                /* Left arrow */
+    	switch(c) {
+
+        	case 13:    /* enter */
+        	    //Handle history
+        	    return (int)l.len;	    
+        	case 127:   /* backspace */	
+        	case 8:     /* ctrl-h */
+        	    linenoiseEditBackspace(&l);
+        	    break;
+            case 4:     /* ctrl-d, remove char at right of cursor, or of the
+                               line is empty, act as end-of-file. */
+                if (l.len > 0) {
+                    linenoiseEditDelete(&l);
+                } else {
+                    //history_len--;
+                    //free(history[history_len]);
+                    return -1;
+                }
+                break;
+            case 20:    /* ctrl-t, swaps current character with previous. */
+        	    //...
+        	    break;
+            case 2:     /* ctrl-b */
                 linenoiseEditMoveLeft(&l);
-            } else if (seq[0] == 91 && seq[1] == 67) {
-                /* Right arrow */
+                break;
+            case 6:     /* ctrl-f */
                 linenoiseEditMoveRight(&l);
-	    }
-	default:
-	    if(!c) //avoid the NULL byte which received from the USART
-		break;
-            if (linenoiseEditInsert(&l,c)) return -1;
-	    break;
-        case 21: /* Ctrl+u, delete the whole line. */
-            buf[0] = '\0';
-            l.pos = l.len = 0;
-            refreshLine(&l);
-	    break;
-        case 11: /* Ctrl+k, delete from current to end of line. */
-            buf[l.pos] = '\0';
-            l.len = l.pos;
-            refreshLine(&l);
-	    break;
-        case 1: /* Ctrl+a, go to the start of the line */
-            l.pos = 0;
-            refreshLine(&l);
-	    break;
-        case 5: /* ctrl+e, go to the end of the line */
-            l.pos = l.len;
-            refreshLine(&l);
-	    break;
-	case 12: /* ctrl+l, clear screen */	
-            linenoiseClearScreen();        
-            refreshLine(&l);
-            break;
-	case 23: /* ctrl+w, delete previous word */
-	    linenoiseEditDeletePrevWord(&l);
-	    break;
-	}
+                break;
+            case 16:    /* ctrl-p */
+                //...
+                break;
+            case 14:    /* ctrl-n */
+                //...
+                break;
+            case 27:    /* escape sequence */
+        	   //seq[0] = serial_getc(); //Wrong!
+        	   //seq[1] = serial_getc(); //Wrong!
+        	   /* Need to implement reading 2 bytes from USART at here */
+                if (seq[0] == 91 && seq[1] == 68) {
+                    /* Left arrow */
+                    linenoiseEditMoveLeft(&l);
+                } else if (seq[0] == 91 && seq[1] == 67) {
+                    /* Right arrow */
+                    linenoiseEditMoveRight(&l);
+    	        }
+            default:
+            	if(!c) //avoid the NULL byte which received from the USART
+            		break;
+                if (linenoiseEditInsert(&l,c)) return -1;
+            	    break;
+            case 21: /* Ctrl+u, delete the whole line. */
+                buf[0] = '\0';
+                l.pos = l.len = 0;
+                refreshLine(&l);
+            	break;
+            case 11: /* Ctrl+k, delete from current to end of line. */
+                buf[l.pos] = '\0';
+                l.len = l.pos;
+                refreshLine(&l);
+            	break;
+            case 1: /* Ctrl+a, go to the start of the line */
+                l.pos = 0;
+                refreshLine(&l);
+            	break;
+            case 5: /* ctrl+e, go to the end of the line */
+                l.pos = l.len;
+                refreshLine(&l);
+            	break;
+            case 12: /* ctrl+l, clear screen */	
+                linenoiseClearScreen();        
+                refreshLine(&l);
+                break;
+            case 23: /* ctrl+w, delete previous word */
+            	linenoiseEditDeletePrevWord(&l);
+            	break;
+    	}
     }
     return l.len;
 }

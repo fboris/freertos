@@ -160,9 +160,9 @@ int puts(const char *msg)
 {
     
 
-    	if (!msg) {
-        	return;
-    	}
+    if (!msg) {
+        return;
+    }
 	fio_write(1, msg,strlen(msg));
 	return 1;
 }
