@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include "linenoise.h"  
 #include "fio.h"
-#include "main.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
