@@ -170,23 +170,26 @@ static void refreshSingleLine(struct linenoiseState *l) {
         len--;
         pos--;
     }
-    while (plen+len > l->cols) {
+    while ((plen+len) > l->cols) {
         len--;
     }
 
-    /* Cursor to left edge */ 
+    /* Cursor to left edge ->ESC [ 0 G*/ 
     serial.puts("\x1b[0G");
     /* Write the prompt and the current buffer content */
     serial.puts(l->prompt);
     serial.puts(buf);
-    /* Erase to right */
+    /* Erase to right -> ESC [ 0 K*/ 
     serial.puts("\x1b[0K");
-    /* Move cursor to original position. */
-    char sq[] = "\x1b[0G\x1b[12C"; //the max columes of Terminal environment is 80
-    /* Set the count of moving cursor */
-    sq[6] = (pos+plen) / 10 + 0x30;  
-    sq[7] = (pos+plen) % 10 + 0x30;
+    /* \x1b[0G->Move cursor to original position(col=0). */
+    
+    char sq[] = "\x1b[0G";
+   /* \x1b[00c->Set the count of moving cursor(col=pos+plen) */
+    char sq2[]= "\x1b[00C";
+    sq2[2] = (pos+plen) / 10 + 0x30;  
+    sq2[3] = (pos+plen) % 10 + 0x30;
     serial.puts(sq);
+    serial.puts(sq2);
 }
 
 static void refreshLine(struct linenoiseState *l) {
@@ -338,8 +341,8 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
                 //...
                 break;
             case 27:    /* escape sequence */
-        	   //seq[0] = serial_getc(); //Wrong!
-        	   //seq[1] = serial_getc(); //Wrong!
+        	   seq[0] = serial.getch(); 
+        	   seq[1] = serial.getch();
         	   /* Need to implement reading 2 bytes from USART at here */
                 if (seq[0] == 91 && seq[1] == 68) {
                     /* Left arrow */
