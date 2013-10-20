@@ -13,6 +13,9 @@
 #include "filesystem.h"
 #include "fio.h"
 
+/* Linenoise and shell includes. */
+#include "linenoise.h"
+
 extern const char _sromfs;
 
 static void setup_hardware();
@@ -76,6 +79,7 @@ void send_byte(char ch)
 	USART_SendData(USART2, ch);
 	USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
 }
+
 char receive_byte()
 {
 	serial_msg msg;
@@ -87,18 +91,23 @@ char receive_byte()
 }
 
 
-void shell_task(void *pvParameters)
-{
-	char buf[] = {0,0} ;
-	char ch;
-	fio_write(1, "hello!", 7);
-	do {
-		fio_read(0, &ch, 1 );
-		buf[0] = ch;
-		puts(buf);
-	} while (1);
+void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
 	
-	while (1);
+    if (buf[0] == 'h') {
+	linenoiseAddCompletion(lc,"hello");
+        linenoiseAddCompletion(lc,"hello world!");
+    }
+}
+
+void shell_task()
+{
+	char *shell_str;
+	
+	linenoiseSetCompletionCallback(linenoise_completion);
+
+	while(1) {
+		shell_str = linenoise("linenoise > ");
+	}
 }
 
 int main()
