@@ -36,6 +36,15 @@ typedef struct {
     void (*putch)(char ch); //If declare as putc will cause naming conflict
 } serial_ops;
 
+char getch_base()
+{
+    char ch;
+    fio_read(0, &ch, 1);
+}
+void putch_base(char ch)
+{
+    fio_write(0, &ch, 1);
+}
 
 
 
@@ -43,8 +52,8 @@ static int mlmode = 0;  /* Multi line mode. Default is single line. */
 
 /* Serial read/write callback functions */
 serial_ops serial = {
-    .getch = receive_byte,
-    .putch = send_byte
+    .getch = getch_base,
+    .putch = putch_base
 };
 
 
@@ -325,6 +334,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
                     /* Right arrow */
                     linenoiseEditMoveRight(&l);
     	        }
+                break;
             default:
             	if(!c) //avoid the NULL byte which received from the USART
             		break;
