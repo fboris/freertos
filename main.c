@@ -129,6 +129,7 @@ void shell_task()
 
 	while(1) {
 		shell_str = linenoise("linenoise > ");
+		linenoiseHistoryAdd(shell_str);
 		#ifdef DBG_TEST
 		queue_str_task(shell_str);
 		queue_str_task("\n\r");

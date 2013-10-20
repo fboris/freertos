@@ -37,16 +37,26 @@ typedef struct {
 } serial_ops;
 
 static void putstr(const char *str) {
-	int msg_len = strlen(str);
+    int msg_len = strlen(str);
 
-	int cur;
-	for(cur = 0; cur < msg_len; cur++) {
-		send_byte(str[cur]);
-	}
+    int cur;
+    for(cur = 0; cur < msg_len; cur++) {
+	send_byte(str[cur]);
+    }
 }
 
+static void read_data(char *buf, size_t count)
+{
+    int i;
+    for(i = 0; i < count; i++) {
+	buf[i] = receive_byte();
+    }	
+}
 
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
+static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
+static int history_len = 0;
+char **history = NULL;
 
 /* Serial read/write callback functions */
 serial_ops serial = {
@@ -220,6 +230,30 @@ void linenoiseEditMoveRight(struct linenoiseState *l) {
     }
 }
 
+#define LINENOISE_HISTORY_NEXT 0
+#define LINENOISE_HISTORY_PREV 1
+void linenoiseEditHistoryNext(struct linenoiseState *l, int dir) {
+    if (history_len > 1) {
+        /* Update the current history entry before to
+         * overwrite it with the next one. */
+        vPortFree(history[history_len - 1 - l->history_index]);
+        history[history_len - 1 - l->history_index] = strdup(l->buf);
+        /* Show the new entry */       
+        l->history_index += (dir == LINENOISE_HISTORY_PREV) ? 1 : -1;
+        if (l->history_index < 0) {    
+            l->history_index = 0;          
+            return;
+        } else if (l->history_index >= history_len) {
+            l->history_index = history_len-1;
+            return;
+        }
+        strncpy(l->buf,history[history_len - 1 - l->history_index],l->buflen);
+        l->buf[l->buflen-1] = '\0';    
+        l->len = l->pos = strlen(l->buf);
+        refreshLine(l);       
+    }  
+}
+
 void linenoiseEditDelete(struct linenoiseState *l) {
     if (l->len > 0 && l->pos < l->len) {
         memmove(l->buf+l->pos,l->buf+l->pos+1,l->len-l->pos-1);
@@ -268,6 +302,11 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     buf[0] = '\0';
     buflen--; /* Make sure there is always space for the nulterm */
 
+    /* The latest history entry is always our current buffer, that
+     * initially is just an empty string. */
+    linenoiseHistoryAdd("");
+    history_len++;
+
     putstr(prompt);
     while(1) {
 	char c;
@@ -286,7 +325,8 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 
 	switch(c) {
 	case 13:    /* enter */
-	    //Handle history
+	    history_len--;
+	    vPortFree(history[history_len]);
 	    return (int)l.len;	    
 	case 127:   /* backspace */	
 	case 8:     /* ctrl-h */
@@ -297,8 +337,8 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             if (l.len > 0) {
                 linenoiseEditDelete(&l);
             } else {
-                //history_len--;
-                //free(history[history_len]);
+                history_len--;
+                vPortFree(history[history_len]);
                 return -1;
             }
             break;
@@ -312,24 +352,17 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             linenoiseEditMoveRight(&l);
             break;
         case 16:    /* ctrl-p */
-            //...
+	    linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_PREV);
             break;
         case 14:    /* ctrl-n */
-            //...
+            linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
             break;
-        case 27:    /* escape sequence */
-	    //seq[0] = serial_getc(); //Wrong!
-	    //seq[1] = serial_getc(); //Wrong!
-	    /* Need to implement reading 2 bytes from USART at here */
-            if (seq[0] == 91 && seq[1] == 68) {
-                /* Left arrow */
-                linenoiseEditMoveLeft(&l);
-            } else if (seq[0] == 91 && seq[1] == 67) {
-                /* Right arrow */
-                linenoiseEditMoveRight(&l);
-	    }
+	   /* escape sequence */
+	case 27:
+	    //Need to merge from "fboris"
+	    break;
 	default:
-	    if(!c) //avoid the NULL byte which received from the USART
+	    if(c == '\0') //avoid the NULL byte which received from the USART
 		break;
             if (linenoiseEditInsert(&l,c)) return -1;
 	    break;
@@ -380,3 +413,35 @@ char *linenoise(const char *prompt) {
     if (count == -1) return NULL;
     return strdup(buf);
 }
+
+static void freeHistory(void) {
+    if (history) {
+        int j;
+
+        for (j = 0; j < history_len; j++)
+	    vPortFree(history[j]); 
+        vPortFree(history);
+    }  
+}
+
+int linenoiseHistoryAdd(const char *line) {
+    char *linecopy;
+
+    if (history_max_len == 0) return 0;
+    if (history == NULL) {
+        history = (char **)pvPortMalloc(sizeof(char*)*history_max_len);
+        if (history == NULL) return 0; 
+        memset(history,0,(sizeof(char*)*history_max_len));
+    }
+    linecopy = strdup(line);
+    if (!linecopy) return 0;
+    if (history_len == history_max_len) {
+        vPortFree(history[0]);
+        memmove(history,history+1,sizeof(char*)*(history_max_len-1));
+        history_len--;
+    }
+    history[history_len] = linecopy;
+    history_len++;
+    return 1;
+}
+
