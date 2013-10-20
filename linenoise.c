@@ -36,7 +36,7 @@ typedef struct {
     void (*putch)(char ch); //If declare as putc will cause naming conflict
 } serial_ops;
 
-void putstr(const char *str) {
+static void putstr(const char *str) {
 	int msg_len = strlen(str);
 
 	int cur;
@@ -87,7 +87,6 @@ static int completeLine(struct linenoiseState *ls) {
 	     /* Show completion or original buffer */
             if (i < lc.len) {
                 struct linenoiseState saved = *ls;
-
                 ls->len = ls->pos = strlen(lc.cvec[i]);
                 ls->buf = lc.cvec[i];
                 refreshLine(ls);
@@ -108,7 +107,7 @@ static int completeLine(struct linenoiseState *ls) {
                 case 27: /* escape */
                     /* Re-show original buffer */
                     if (i < lc.len) refreshLine(ls);
-                    //stop = 1;
+                    stop = 1;
                     break;
                 default:
                     /* Update buffer and return */
@@ -166,7 +165,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
     /* Erase to right */
     putstr("\x1b[0K");
     /* Move cursor to original position. */
-    char sq[] = "\x1b[0G\x1b[12C"; //the max columes of Terminal environment is 80
+    char sq[] = "\x1b[0G\x1b[00C"; //the max columes of Terminal environment is 80
     /* Set the count of moving cursor */
     sq[6] = (pos+plen) / 10 + 0x30;  
     sq[7] = (pos+plen) % 10 + 0x30;
@@ -284,6 +283,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             if (c == 0) continue;      
         }
 
+
 	switch(c) {
 	case 13:    /* enter */
 	    //Handle history
@@ -378,5 +378,5 @@ char *linenoise(const char *prompt) {
 
     count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
     if (count == -1) return NULL;
-    return /*strdup(buf);*/ 0; //Need to implement strdup or allocate enough chars
+    return strdup(buf);
 }

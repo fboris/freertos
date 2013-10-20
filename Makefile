@@ -58,7 +58,6 @@ main.bin: test-romfs.o main.c linenoise.c
 		\
 		linenoise.c \
 		\
-		string.c \
 		memory_op.c
 	$(CROSS_COMPILE)ld -Tmain.ld -nostartfiles -o main.elf \
 		core_cm3.o \
@@ -84,7 +83,6 @@ main.bin: test-romfs.o main.c linenoise.c
 		\
 		linenoise.o \
 		\
-		string.o \
 		memory_op.o
 	$(CROSS_COMPILE)objcopy -Obinary main.elf main.bin
 	$(CROSS_COMPILE)objdump -S main.elf > main.list
