@@ -12,6 +12,10 @@
 #define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
 
 static linenoiseCompletionCallback *completionCallback = NULL;
+static int mlmode = 0;  /* Multi line mode. Default is single line. */
+static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
+static int history_len = 0;
+char **history = NULL;
 
 struct linenoiseState {
     char *buf;          /* Edited line buffer. */
@@ -35,6 +39,7 @@ typedef struct {
     int (*puts) (const char *msg);
 } serial_ops;
 
+
 int puts_base(char* msg)
 {
     if (!msg) {
@@ -51,18 +56,10 @@ char getch_base()
     return ch;
 }
 
-
 void putch_base(char ch)
 {
     fio_write(1, &ch, 1);
 }
-
-
-
-static int mlmode = 0;  /* Multi line mode. Default is single line. */
-static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
-static int history_len = 0;
-char **history = NULL;
 
 /* Serial read/write callback functions */
 serial_ops serial = {
@@ -70,7 +67,6 @@ serial_ops serial = {
     .putch = putch_base,
     .puts = puts_base
 };
-
 
 void linenoiseClearScreen(void) {
 
@@ -185,14 +181,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
     /* Erase to right -> ESC [ 0 K*/ 
     serial.puts("\x1b[0K");
     /* \x1b[0G->Move cursor to original position(col=0). */
-    
-    //char sq[] = "\x1b[0G";
     /* \x1b[00c->Set the count of moving cursor(col=pos+plen) */
-    //char sq2[]= "\x1b[00C";
-    //sq2[2] = (pos+plen) / 10 + 0x30;  
-    //sq2[3] = (pos+plen) % 10 + 0x30;
-    //serial.puts(sq);
-    //serial.puts(sq2);
     char sq[] = "\x1b[0G\x1b[00C";
     sq[6] = (pos+plen) / 10 + 0x30;  
     sq[7] = (pos+plen) % 10 + 0x30;
