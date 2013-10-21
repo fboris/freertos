@@ -11,6 +11,7 @@
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
 enum key_action{
+    TAB = 9,            /*tab*/
     ENTER = 13,         /* enter */
     CTRL_C = 3,         /* ctrl-c*/
     BACKSPACE =  127,   /* backspace */ 
@@ -141,11 +142,11 @@ static int completeLine(struct linenoiseState *ls) {
 	       c = serial.getch();
 
             switch(c) {
-                case 9: /* tab */
+                case TAB: /* tab */
                     i = (i+1) % (lc.len+1);
                     if (i == lc.len) linenoiseBeep();
                     break;
-                case 27: /* escape */
+                case ESC: /* escape */
                     /* Re-show original buffer */
                     if (i < lc.len) refreshLine(ls);
                     stop = 1;
@@ -207,9 +208,6 @@ static void refreshSingleLine(struct linenoiseState *l) {
     serial.puts("\x1b[0K");
     /* \x1b[0G->Move cursor to original position(col=0). */
     /* \x1b[00c->Set the count of moving cursor(col=pos+plen) */
-    //char sq[] = "\x1b[0G\x1b[00C";
-    //sq[7] = (pos+plen) / 10 + 0x30;  
-    //sq[8] = (pos+plen) % 10 + 0x30;
     char sq1[] = "\x1b[0G";
     char sq2[] = "\x1b[00C";
     sq2[2] = (pos+plen) / 10 + 0x30; 
