@@ -13,8 +13,8 @@
 #include "filesystem.h"
 #include "fio.h"
 
-/* Linenoise and shell includes. */
-#include "linenoise.h"
+/*shell enviroment*/
+#include "shell.h"
 
 extern const char _sromfs;
 
@@ -91,25 +91,7 @@ char receive_byte()
 }
 
 
-void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
-	
-    if (buf[0] == 'h') {
-	linenoiseAddCompletion(lc,"hello");
-        linenoiseAddCompletion(lc,"hello world!");
-    }
-}
 
-void shell_task()
-{
-	char *shell_str;
-	
-	linenoiseSetCompletionCallback(linenoise_completion);
-
-	while(1) {
-		shell_str = linenoise("linenoise > ");
-		linenoiseHistoryAdd(shell_str);
-	}
-}
 
 int main()
 {
