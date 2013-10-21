@@ -207,10 +207,15 @@ static void refreshSingleLine(struct linenoiseState *l) {
     serial.puts("\x1b[0K");
     /* \x1b[0G->Move cursor to original position(col=0). */
     /* \x1b[00c->Set the count of moving cursor(col=pos+plen) */
-    char sq[] = "\x1b[0G\x1b[00C";
-    sq[6] = (pos+plen) / 10 + 0x30;  
-    sq[7] = (pos+plen) % 10 + 0x30;
-    serial.puts(sq);
+    //char sq[] = "\x1b[0G\x1b[00C";
+    //sq[7] = (pos+plen) / 10 + 0x30;  
+    //sq[8] = (pos+plen) % 10 + 0x30;
+    char sq1[] = "\x1b[0G";
+    char sq2[] = "\x1b[00C";
+    sq2[2] = (pos+plen) / 10 + 0x30; 
+    sq2[3] = (pos+plen) % 10 + 0x30;
+    serial.puts(sq1);
+    serial.puts(sq2);
 }
 
 static void refreshLine(struct linenoiseState *l) {
