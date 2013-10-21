@@ -386,7 +386,12 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
                 } else if (seq[0] == 91 && seq[1] == 67) {
                     /* Right arrow */
                     linenoiseEditMoveRight(&l);
-    	        }
+    	        } else if (seq[0] == 91 && (seq[1] == 65 || seq[1] == 66)) {
+                    /* Up and Down arrows */
+                    linenoiseEditHistoryNext(&l,
+                    (seq[1] == 65) ? LINENOISE_HISTORY_PREV :
+                                     LINENOISE_HISTORY_NEXT);
+                } 
                 break;
             default:
             	if(c == '\0') //avoid the NULL byte which received from the USART
