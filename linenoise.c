@@ -10,7 +10,32 @@
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 1024 //4096 is too much to this environment, it will crash!
+enum key_action{
+    ENTER = 13,         /* enter */
+    CTRL_C = 3,         /* ctrl-c*/
+    BACKSPACE =  127,   /* backspace */ 
+    CTRL_H = 8,         /* ctrl-h */
+    CTRL_D = 4,         /* ctrl-d, remove char at right of cursor, or of the*/
+    CTRL_T = 20,        /* ctrl-t*/
+    CTRL_B = 2,         /* ctrl-b*/
+    CTRL_F = 6,         /* ctrl-f*/
+    CTRL_P = 16,        /* ctrl-p */
+    CTRL_N = 14,        /* ctrl-n */     
+    ESC = 27,           /* escape sequence */
+    ARROW_PREFIX = 91,  /*any ARROW = ESC + [ + (65~68) */
+    LEFT_ARROW = 68,    /*last character of left arrow*/
+    RIGHT_ARROW = 67,   /*last character of right arrow*/
+    UP_ARROW = 65,      /*last character of up arrow*/
+    DOWN_ARROW = 66,    /*last character of down arrow*/
+    NULL_CH = 0,    /*NULL characer*/
+    CTRL_U = 21,    /*Ctrl+U*/
+    CTRL_K = 11,    /*Ctrl+k*/
+    CTRL_A = 1,     /*Ctrl+a*/
+    CTRL_E = 5,     /*Ctrl+e*/
+    CTRL_L = 12,    /*Ctrl+l*/
+    CTRL_W = 23     /*Ctrl+w*/
 
+};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
@@ -332,15 +357,15 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 
     	switch(c) {
 
-        	case 13:    /* enter */
+        	case ENTER:    /* enter */
         	    history_len--;
 				vPortFree(history[history_len]);
         	    return (int)l.len;	    
-        	case 127:   /* backspace */	
-        	case 8:     /* ctrl-h */
+        	case BACKSPACE:   /* backspace */	
+        	case CTRL_H:     /* ctrl-h */
         	    linenoiseEditBackspace(&l);
         	    break;
-            case 4:     /* ctrl-d, remove char at right of cursor, or of the
+            case CTRL_D:     /* ctrl-d, remove char at right of cursor, or of the
                                line is empty, act as end-of-file. */
                 if (l.len > 0) {
                     linenoiseEditDelete(&l);
@@ -350,32 +375,32 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
                     return -1;
                 }
                 break;
-            case 20:    /* ctrl-t, swaps current character with previous. */
+            case CTRL_T:    /* ctrl-t, swaps current character with previous. */
         	    //...
         	    break;
-            case 2:     /* ctrl-b */
+            case CTRL_B:     /* ctrl-b */
                 linenoiseEditMoveLeft(&l);
                 break;
-            case 6:     /* ctrl-f */
+            case CTRL_F:     /* ctrl-f */
                 linenoiseEditMoveRight(&l);
                 break;
-            case 16:    /* ctrl-p */
+            case CTRL_P:    /* ctrl-p */
                 linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_PREV);
                 break;
-            case 14:    /* ctrl-n */
+            case CTRL_N:    /* ctrl-n */
                 linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
                 break;
-            case 27:    /* escape sequence */
+            case ESC:    /* escape sequence */
         	   seq[0] = serial.getch(); 
         	   seq[1] = serial.getch();
         	   /* Need to implement reading 2 bytes from USART at here */
-                if (seq[0] == 91 && seq[1] == 68) {
+                if (seq[0] == ARROW_PREFIX && seq[1] == LEFT_ARROW) {
                     /* Left arrow */
                     linenoiseEditMoveLeft(&l);
-                } else if (seq[0] == 91 && seq[1] == 67) {
+                } else if (seq[0] == ARROW_PREFIX && seq[1] == RIGHT_ARROW) {
                     /* Right arrow */
                     linenoiseEditMoveRight(&l);
-    	        } else if (seq[0] == 91 && (seq[1] == 65 || seq[1] == 66)) {
+    	        } else if (seq[0] == ARROW_PREFIX && (seq[1] == UP_ARROW || seq[1] == DOWN_ARROW)) {
                     /* Up and Down arrows */
                     linenoiseEditHistoryNext(&l,
                     (seq[1] == 65) ? LINENOISE_HISTORY_PREV :
@@ -387,29 +412,29 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             		break;
                 if (linenoiseEditInsert(&l,c)) return -1;
             	    break;
-            case 21: /* Ctrl+u, delete the whole line. */
+            case CTRL_U: /* Ctrl+u, delete the whole line. */
                 buf[0] = '\0';
                 l.pos = l.len = 0;
                 refreshLine(&l);
             	break;
-            case 11: /* Ctrl+k, delete from current to end of line. */
+            case CTRL_K: /* Ctrl+k, delete from current to end of line. */
                 buf[l.pos] = '\0';
                 l.len = l.pos;
                 refreshLine(&l);
             	break;
-            case 1: /* Ctrl+a, go to the start of the line */
+            case CTRL_A: /* Ctrl+a, go to the start of the line */
                 l.pos = 0;
                 refreshLine(&l);
             	break;
-            case 5: /* ctrl+e, go to the end of the line */
+            case CTRL_E: /* ctrl+e, go to the end of the line */
                 l.pos = l.len;
                 refreshLine(&l);
             	break;
-            case 12: /* ctrl+l, clear screen */	
+            case CTRL_L: /* ctrl+l, clear screen */	
                 linenoiseClearScreen();        
                 refreshLine(&l);
                 break;
-            case 23: /* ctrl+w, delete previous word */
+            case CTRL_W: /* ctrl+w, delete previous word */
             	linenoiseEditDeletePrevWord(&l);
             	break;
     	}
