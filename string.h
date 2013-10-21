@@ -10,5 +10,6 @@ size_t strlen(const char *string);
 int strcmp(const char *str_a, const char *str_b);
 int strncmp(const char *str_a, const char *str_b, size_t n);
 char *strcat(char *dest, const char *src);
+char *strdup(const char *str);
 int puts(const char *msg);
 #endif

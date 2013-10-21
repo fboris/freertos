@@ -67,7 +67,18 @@ void *memmove(void *dest, const void *src, size_t count)
 			*--tmp = *--s;
 	}
 	return dest;
-}                   
+} 
+
+char *strdup(const char *str)
+{
+        char *ptr;
+
+        ptr = (char *)pvPortMalloc(strlen(str));
+        if(ptr == NULL)
+                return NULL;
+
+        return memcpy(ptr, str, strlen(str));
+}
 
 char *strchr(const char *s, int c)
 {

@@ -107,6 +107,7 @@ void shell_task()
 
 	while(1) {
 		shell_str = linenoise("linenoise > ");
+		linenoiseHistoryAdd(shell_str);
 	}
 }
 
