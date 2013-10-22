@@ -58,14 +58,6 @@ struct linenoiseState {
 
 static void refreshLine(struct linenoiseState *l);
 
-/* USART read/write functions structure */
-typedef struct {
-    char (*getch) (); //If declare as getc will cause naming conflict
-    void (*putch) (char ch); //If declare as putc will cause naming conflict
-    int (*puts) (const char *msg);
-} serial_ops;
-
-
 int puts_base(char* msg)
 {
     if (!msg) {

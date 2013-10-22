@@ -39,7 +39,11 @@ static cmd_entry available_cmds[] = {
 static void help_menu(int argc, char *argv)
 {}
 static void echo_cmd(int argc, char *argv)
-{}
+{
+    serial.puts("echo ");
+    serial.puts(argv + strlen(available_cmds[1].name) );
+    serial.puts("\r\n");
+}
 static void ps_cmd(int argc, char *argv)
 {}
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
