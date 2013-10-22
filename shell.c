@@ -2,8 +2,9 @@
 #include "string.h"
 /* Linenoise and shell includes. */
 #include "linenoise.h"
-
+#include "shell.h"
 extern serial_ops serial;
+
 typedef void (*cmd_func_t)(int argc, char *argv);
 
 struct cmd_t
@@ -19,21 +20,9 @@ static void help_menu(int argc, char *argv);
 static void echo_cmd(int argc, char *argv);
 static void ps_cmd(int argc, char *argv);
 static cmd_entry available_cmds[] = {
-        {
-            .name = "help",
-            .description  = "Show availabe commands.",
-            .handler = help_menu
-        },
-        {
-            .name = "echo",
-            .description  = "Show words you input.",
-            .handler = echo_cmd
-        },
-        {
-            .name = "ps",
-            .description  = "List All current process.",
-            .handler = ps_cmd
-        }
+        [CMD_HELP] = {.name = "help",.description  = "Show availabe commands.", .handler = help_menu},
+        [CMD_ECHO] =  {.name = "echo",.description  = "Show words you input.",.handler = echo_cmd },
+        [CMD_PS] = {.name = "ps",.description  = "List All current process.",.handler = ps_cmd}
   
 };
 static void help_menu(int argc, char *argv)
@@ -41,7 +30,7 @@ static void help_menu(int argc, char *argv)
 static void echo_cmd(int argc, char *argv)
 {
     serial.puts("echo ");
-    serial.puts(argv + strlen(available_cmds[1].name) );
+    serial.puts(argv + strlen(available_cmds[CMD_ECHO].name) );
     serial.puts("\r\n");
 }
 static void ps_cmd(int argc, char *argv)
