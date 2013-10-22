@@ -28,7 +28,7 @@ enum key_action{
     RIGHT_ARROW = 67,   /*last character of right arrow*/
     UP_ARROW = 65,      /*last character of up arrow*/
     DOWN_ARROW = 66,    /*last character of down arrow*/
-    NULL_CH = 0,    /*NULL characer*/
+    NULL_CH = 0,    /*NULL character*/
     CTRL_U = 21,    /*Ctrl+U*/
     CTRL_K = 11,    /*Ctrl+k*/
     CTRL_A = 1,     /*Ctrl+a*/
@@ -406,7 +406,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     	        } else if (seq[0] == ARROW_PREFIX && (seq[1] == UP_ARROW || seq[1] == DOWN_ARROW)) {
                     /* Up and Down arrows */
                     linenoiseEditHistoryNext(&l,
-                    (seq[1] == 65) ? LINENOISE_HISTORY_PREV :
+                    (seq[1] == UP_ARROW) ? LINENOISE_HISTORY_PREV :
                                      LINENOISE_HISTORY_NEXT);
                 } 
                 break;

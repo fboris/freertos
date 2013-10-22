@@ -133,7 +133,20 @@ size_t strlen(const char *s)
 		:::
 	);
 }
+/*
+This function is from zzz072
+*/
+int strncmp(const char *str_a, const char *str_b, size_t n)
+{
+    int i = 0;
 
+    for(i = 0; i < n; i++) {
+        if (str_a[i] != str_b[i]) {
+            return str_a[i] - str_b[i];
+        }
+    }
+    return 0;
+}
 /*
 This function is from zzz072
 */
