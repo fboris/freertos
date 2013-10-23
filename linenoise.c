@@ -58,15 +58,6 @@ struct linenoiseState {
 
 static void refreshLine(struct linenoiseState *l);
 
-int puts_base(char* msg)
-{
-    if (!msg) {
-        return;
-    }
-    fio_write(1, msg, strlen(msg));
-    return 1;
-}
-
 char getch_base()
 {
     char ch;
@@ -83,12 +74,11 @@ void putch_base(char ch)
 serial_ops serial = {
     .getch = getch_base,
     .putch = putch_base,
-    .puts = puts_base
 };
 
 void linenoiseClearScreen(void) {
 
-    serial.puts("\x1b[H\x1b[2J");
+    puts("\x1b[H\x1b[2J");
 
 }
 
@@ -102,7 +92,7 @@ static void freeCompletions(linenoiseCompletions *lc) {
 
 
 static void linenoiseBeep(void) {
-    serial.puts("\x7");
+    puts("\x7");
 }
 
 static int completeLine(struct linenoiseState *ls) {
@@ -192,20 +182,20 @@ static void refreshSingleLine(struct linenoiseState *l) {
     }
 
     /* Cursor to left edge ->ESC [ 0 G*/ 
-    serial.puts("\x1b[0G");
+    puts("\x1b[0G");
     /* Write the prompt and the current buffer content */
-    serial.puts(l->prompt);
-    serial.puts(buf);
+    puts(l->prompt);
+    puts(buf);
     /* Erase to right -> ESC [ 0 K*/ 
-    serial.puts("\x1b[0K");
+    puts("\x1b[0K");
     /* \x1b[0G->Move cursor to original position(col=0). */
     /* \x1b[00c->Set the count of moving cursor(col=pos+plen) */
     char sq1[] = "\x1b[0G";
     char sq2[] = "\x1b[00C";
     sq2[2] = (pos+plen) / 10 + 0x30; 
     sq2[3] = (pos+plen) % 10 + 0x30;
-    serial.puts(sq1);
-    serial.puts(sq2);
+    puts(sq1);
+    puts(sq2);
 }
 
 static void refreshLine(struct linenoiseState *l) {
@@ -335,7 +325,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
      * initially is just an empty string. */
     linenoiseHistoryAdd("");
     history_len++;
-    serial.puts(prompt);
+    puts(prompt);
     while(1) {
     	char c;
     	char seq[2] = {0};	
@@ -441,7 +431,7 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     count = linenoiseEdit(buf, buflen, prompt);
-    serial.puts("\n\r");
+    puts("\n\r");
     
     return count;
 }

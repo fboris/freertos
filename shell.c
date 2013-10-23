@@ -3,7 +3,6 @@
 /* Linenoise and shell includes. */
 #include "linenoise.h"
 #include "shell.h"
-extern serial_ops serial;
 
 typedef int (*cmd_func_t)(int argc, char *argv);
 
@@ -31,12 +30,12 @@ static int help_menu(int argc, char *argv)
     if( strlen(argv) != strlen(available_cmds[CMD_HELP].name))
         return -1;
     int i;
-    serial.puts("Name\tDescription\r\n");
+    puts("Name\tDescription\r\n");
     for (i = 0;i < sizeof(available_cmds)/sizeof(cmd_entry) ; i++){
-        serial.puts(available_cmds[i].name);
-        serial.puts("\t");
-        serial.puts(available_cmds[i].description);
-        serial.puts("\r\n");
+        puts(available_cmds[i].name);
+        puts("\t");
+        puts(available_cmds[i].description);
+        puts("\r\n");
     }
     return 0;
 }
@@ -45,9 +44,9 @@ static int echo_cmd(int argc, char *argv)
     /*There must be  a space after "echo" string*/
     if( argv[strlen(available_cmds[CMD_ECHO].name)] != ' ')
         return -1;
-    serial.puts("echo ");
-    serial.puts(argv + strlen(available_cmds[CMD_ECHO].name) );
-    serial.puts("\r\n");
+    puts("echo ");
+    puts(argv + strlen(available_cmds[CMD_ECHO].name) );
+    puts("\r\n");
     return 0;
 }
 static int ps_cmd(int argc, char *argv)
@@ -76,7 +75,7 @@ static void proc_cmd(char *cmd)
         }
     }
 
-    serial.puts("Command not found.\n\r");
+    puts("Command not found.\n\r");
 }
 
 void shell_task(void *pvParameters)
