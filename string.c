@@ -147,41 +147,98 @@ int strncmp(const char *str_a, const char *str_b, size_t n)
     }
     return 0;
 }
-/*
-This function is from zzz072
-*/
-#define itoa(val) itoa_base(val, 10)
-#define htoa(val) itoa_base(val, 16)
 
-static char* itoa_base(int val, int base)
+char *strcat(char *dst, const char *src)
 {
-    static char buf[32] = { 0 };
-    char has_minus = 0;
-    int i = 30;
+  char *ret = dst;
 
-    /* Sepecial case: 0 */
-    if (val == 0) {
-        buf[1] = '0';
-        return &buf[1];
-    }
+  for (; *dst; ++dst);
+  while ((*dst++ = *src++));
 
-    if (val < 0) {
-        val = -val;
-        has_minus = 1;
-    }
-
-    for (; val && (i - 1) ; --i, val /= base)
-        buf[i] = "0123456789abcdef"[val % base];
-
-    if (has_minus) {
-        buf[i] = '-';
-        return &buf[i];
-    }
-    return &buf[i + 1];
+  return ret;
 }
+
+static char *utoa(unsigned int num, char *dst, unsigned int base)
+{
+	char buf[33] = {0};
+	char *p = &buf[32];
+
+	if (num == 0){
+    	*--p = '0';
+    }
+  	else{
+    	for (; num; num/=base)
+      	*--p = "0123456789ABCDEF" [num % base];
+  	}
+  	return strcpy(dst, p);
+} 
+char *itoa(int num, char *dst, int base)
+{
+ 	if (base == 10 && num < 0) {
+		utoa(-num, dst+1, base);
+    	*dst = '-';
+  	}
+  	else
+   		utoa(num, dst, base);
+
+  	return dst;
+} 
 
 int puts(const char* msg)
 {
     fio_write(1, msg, strlen(msg));
     return 1;
 }
+int sprintf(char *dst, const char *fmt, ...)
+{
+  union {
+    int i;
+    const char *s;
+    unsigned u;
+  } argv;
+  char *p = dst;
+  va_list arg_list;
+
+  va_start(arg_list, fmt);
+  for (; *fmt; ++fmt) {
+    if (*fmt == '%') {
+      switch (*++fmt) {
+        case '%':
+          *p++ = '%';
+        break;
+        case 'c':
+          argv.i = va_arg(arg_list, int);
+          *p++ = (char)argv.i;
+        break;
+        case 'd':
+        case 'i':
+          argv.i = va_arg(arg_list, int);
+          itoa(argv.i, p, 10);
+          p += strlen(p);
+        break;
+        case 'u':
+          argv.u = va_arg(arg_list, unsigned);
+          utoa(argv.u, p, 10);
+          p += strlen(p);
+        break;
+        case 's':
+          argv.s = va_arg(arg_list, const char *);
+          strcpy(p, argv.s);
+          p += strlen(p);
+        break;
+        case 'X':
+          argv.u = va_arg(arg_list, unsigned);
+          utoa(argv.u, p, 16);
+          p += strlen(p);
+        break;
+      }
+    }
+    else
+      *p++ = *fmt;
+  }
+  va_end(arg_list);
+  *p = '\0';
+
+  return p - dst;
+}
+ 
