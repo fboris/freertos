@@ -5,7 +5,7 @@
 #include "shell.h"
 extern serial_ops serial;
 
-typedef void (*cmd_func_t)(int argc, char *argv);
+typedef int (*cmd_func_t)(int argc, char *argv);
 
 struct cmd_t
 {
@@ -16,25 +16,44 @@ struct cmd_t
 
 typedef struct cmd_t cmd_entry;
 
-static void help_menu(int argc, char *argv);
-static void echo_cmd(int argc, char *argv);
-static void ps_cmd(int argc, char *argv);
+static int help_menu(int argc, char *argv);
+static int echo_cmd(int argc, char *argv);
+static int ps_cmd(int argc, char *argv);
 static cmd_entry available_cmds[] = {
         [CMD_HELP] = {.name = "help",.description  = "Show availabe commands.", .handler = help_menu},
         [CMD_ECHO] =  {.name = "echo",.description  = "Show words you input.",.handler = echo_cmd },
         [CMD_PS] = {.name = "ps",.description  = "List All current process.",.handler = ps_cmd}
   
 };
-static void help_menu(int argc, char *argv)
-{}
-static void echo_cmd(int argc, char *argv)
+static int help_menu(int argc, char *argv)
 {
+     /*help only support list all commands now.*/
+    if( strlen(argv) != strlen(available_cmds[CMD_HELP].name))
+        return -1;
+    int i;
+    serial.puts("Name\tDescription\r\n");
+    for (i = 0;i < sizeof(available_cmds)/sizeof(cmd_entry) ; i++){
+        serial.puts(available_cmds[i].name);
+        serial.puts("\t");
+        serial.puts(available_cmds[i].description);
+        serial.puts("\r\n");
+    }
+    return 0;
+}
+static int echo_cmd(int argc, char *argv)
+{
+    /*There must be  a space after "echo" string*/
+    if( argv[strlen(available_cmds[CMD_ECHO].name)] != ' ')
+        return -1;
     serial.puts("echo ");
     serial.puts(argv + strlen(available_cmds[CMD_ECHO].name) );
     serial.puts("\r\n");
+    return 0;
 }
-static void ps_cmd(int argc, char *argv)
-{}
+static int ps_cmd(int argc, char *argv)
+{
+    return 0;
+}
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
 	
     if (buf[0] == 'h') {
@@ -50,10 +69,9 @@ static void proc_cmd(char *cmd)
     /* process command: it will find and execute availabe commands.*/
     for (i = 0; i < sizeof(available_cmds)/sizeof(cmd_entry); i++) {
         if (strncmp(cmd, available_cmds[i].name, strlen(available_cmds[i].name)) == 0) {
-            /*prevent the case echo1. check space here*/
-            if( cmd[strlen(available_cmds[i].name)] != ' ')
+            /*check command*/
+            if(available_cmds[i].handler(0, cmd) == -1)
                 continue;
-            available_cmds[i].handler(0, cmd);
             return;
         }
     }
