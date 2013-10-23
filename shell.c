@@ -51,6 +51,9 @@ static int echo_cmd(int argc, char *argv)
 }
 static int ps_cmd(int argc, char *argv)
 {
+    char buf[1024]={0};
+    vTaskList(buf);
+    puts(buf);
     return 0;
 }
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
