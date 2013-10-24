@@ -72,11 +72,12 @@ void *memmove(void *dest, const void *src, size_t count)
 char *strdup(const char *str)
 {
         char *ptr;
-
-        ptr = (char *)pvPortMalloc(strlen(str));
+        /*dont forget to allocate last word in string*/
+        ptr = (char *)pvPortMalloc(strlen(str)+1);
         if(ptr == NULL)
                 return NULL;
-
+        /*make the end of string have null character*/
+        ptr[strlen(str)+1] = '\0';
         return memcpy(ptr, str, strlen(str));
 }
 

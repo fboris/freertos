@@ -44,10 +44,17 @@ static int echo_cmd(int argc, char *argv)
     /*There must be  a space after "echo" string*/
     if( argv[strlen(available_cmds[CMD_ECHO].name)] != ' ')
         return -1;
-    puts("echo ");
-    puts(argv + strlen(available_cmds[CMD_ECHO].name) );
+    argv += strlen(available_cmds[CMD_ECHO].name) + 1;
+
+    for(; *argv; argv++){
+        if ( *argv != ' '){
+            
+            break;
+        }
+    }
+    puts(argv);
     puts("\r\n");
-    return 0;
+    return 0; 
 }
 static int ps_cmd(int argc, char *argv)
 {

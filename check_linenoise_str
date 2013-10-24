@@ -1,0 +1,6 @@
+file main.elf
+target remote :3333
+b linenoise.c:linenoise
+b string.c:strdup
+b shell.c:echo_cmd
+c
