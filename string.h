@@ -11,7 +11,6 @@ int strcmp(const char *str_a, const char *str_b);
 int strncmp(const char *str_a, const char *str_b, size_t n);
 char *strcat(char *dest, const char *src);
 char *strdup(const char *str);
-int puts(const char *msg);
 char *strncpy(char *dest, const char *src, size_t n);
 int sprintf(char *dst, const char *fmt, ...);
 #endif

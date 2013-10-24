@@ -16,7 +16,7 @@ FREERTOS_PORT_INC = $(FREERTOS_SRC)/portable/GCC/ARM_$(ARCH)/
 
 all: main.bin
 
-main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c
+main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io.c
 	$(CROSS_COMPILE)gcc \
 		-I. -I$(FREERTOS_INC) -I$(FREERTOS_PORT_INC) \
 		-I$(CODEBASE)/libraries/CMSIS/CM3/CoreSupport \
@@ -45,6 +45,8 @@ main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c
 		$(FREERTOS_SRC)/portable/MemMang/heap_1.c \
 		\
 		stm32_p103.c \
+		\
+		serial_io.c\
 		\
 		romfs.c \
 		hash-djb2.c \
@@ -76,6 +78,8 @@ main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c
 		port.o heap_1.o \
 		\
 		stm32_p103.o \
+		\
+		serial_io.o\
 		\
 		romfs.o hash-djb2.o filesystem.o fio.o \
 		\

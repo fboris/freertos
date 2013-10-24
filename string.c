@@ -185,11 +185,6 @@ char *itoa(int num, char *dst, int base)
   	return dst;
 } 
 
-int puts(const char* msg)
-{
-    fio_write(1, msg, strlen(msg));
-    return 1;
-}
 int sprintf(char *dst, const char *fmt, ...)
 {
   union {
