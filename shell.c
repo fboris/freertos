@@ -86,11 +86,14 @@ static int ps_cmd(int argc, char *argv)
     return 0;
 }
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
-	
-    if (buf[0] == 'h') {
-	linenoiseAddCompletion(lc,"hello");
-        linenoiseAddCompletion(lc,"hello world!");
+    
+	int i;
+    for (i = 0; i < sizeof(available_cmds)/sizeof(cmd_entry); i++) {
+        if(buf[0] == available_cmds[i].name[0])
+            linenoiseAddCompletion(lc, available_cmds[i].name);
     }
+
+
 }
 
 static void proc_cmd(char *cmd)
