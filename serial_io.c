@@ -18,10 +18,4 @@ serial_ops serial = {
     .putch = putch_base,
 };
 
-int puts(const char* msg)
-{	
-	for(; *msg; msg++)
-	serial.putch(*msg);
 
-    return 1;
-}

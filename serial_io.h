@@ -8,7 +8,7 @@ typedef struct {
     char (*getch) (); //If declare as getc will cause naming conflict
     void (*putch) (char ch); //If declare as putc will cause naming conflict
 } serial_ops;
-int puts(const char* msg);
+
 
 
 

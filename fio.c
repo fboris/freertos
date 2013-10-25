@@ -1,4 +1,7 @@
 #include <string.h>
+#include <stdint.h>
+#include <stdarg.h> 
+#include <limits.h>
 #include <FreeRTOS.h>
 #include <semphr.h>
 #include <unistd.h>
@@ -6,6 +9,10 @@
 #include "filesystem.h"
 #include "osdebug.h"
 #include "hash-djb2.h"
+#include "serial_io.h"
+#include "util.h"
+
+extern serial_ops serial;
 
 static struct fddef_t fio_fds[MAX_FDS];
 
@@ -189,4 +196,120 @@ static int devfs_open(void * opaque, const char * path, int flags, int mode) {
 void register_devfs() {
     DBGOUT("Registering devfs.\r\n");
     register_fs("dev", devfs_open, NULL);
+}
+
+
+int puts(const char* msg)
+{   
+    for(; *msg; msg++)
+    serial.putch(*msg);
+
+    return 1;
+}
+
+int sprintf(char *dst, const char *fmt, ...)
+{
+  union {
+    int i;
+    const char *s;
+    unsigned u;
+  } argv;
+  char *p = dst;
+  va_list arg_list;
+
+  va_start(arg_list, fmt);
+  for (; *fmt; ++fmt) {
+    if (*fmt == '%') {
+      switch (*++fmt) {
+        case '%':
+          *p++ = '%';
+        break;
+        case 'c':
+          argv.i = va_arg(arg_list, int);
+          *p++ = (char)argv.i;
+        break;
+        case 'd':
+        case 'i':
+          argv.i = va_arg(arg_list, int);
+          itoa(argv.i, p, 10);
+          p += strlen(p);
+        break;
+        case 'u':
+          argv.u = va_arg(arg_list, unsigned);
+          utoa(argv.u, p, 10);
+          p += strlen(p);
+        break;
+        case 's':
+          argv.s = va_arg(arg_list, const char *);
+          strcpy(p, argv.s);
+          p += strlen(p);
+        break;
+        case 'x':
+        case 'X':
+          argv.u = va_arg(arg_list, unsigned);
+          utoa(argv.u, p, 16);
+          p += strlen(p);
+        break;
+      }
+    }
+    else
+      *p++ = *fmt;
+  }
+  va_end(arg_list);
+  *p = '\0';
+
+  return p - dst;
+}
+ 
+int printf(const char *fmt, ...)
+{
+    char buf[8];
+    union {
+        int i;
+        const char *s;
+        unsigned u;
+    } argv;
+    va_list arg_list;
+    
+    va_start(arg_list, fmt);
+    for (; *fmt; ++fmt) {
+        if (*fmt == '%') {
+            switch (*++fmt) {
+                case '%':
+                    serial.putch('%');
+                break;
+                case 'c':
+                    argv.i = va_arg(arg_list, int);
+                    serial.putch(argv.i);
+                break;
+                case 'd':
+                case 'i':
+                    argv.i = va_arg(arg_list, int);
+                    itoa(argv.i, buf, 10);
+                    puts(buf);
+                break;
+                case 'u':
+                    argv.u = va_arg(arg_list, unsigned);
+                    utoa(argv.u, buf, 10);
+                    puts(buf);
+                break;
+                case 's':
+                    argv.s = va_arg(arg_list, const char *);
+                    puts(argv.s);
+                break;
+                case 'x':
+                case 'X':
+                    argv.u = va_arg(arg_list, unsigned);
+                    utoa(argv.u, buf, 16);
+                    puts(buf);
+                break;
+            }
+        }
+        else {
+            serial.putch(*fmt);
+        }
+    } 
+    va_end(arg_list);
+    return 1;
+
 }

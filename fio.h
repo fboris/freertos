@@ -40,5 +40,6 @@ int fio_close(int fd);
 void fio_set_opaque(int fd, void * opaque);
 
 void register_devfs();
-
+int printf(const char *fmt, ...);
+int puts(const char* msg);
 #endif
