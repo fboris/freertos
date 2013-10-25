@@ -50,7 +50,7 @@ void USART2_IRQHandler()
 		if(!xQueueSendToBackFromISR(serial_rx_queue, &rx_msg, &xHigherPriorityTaskWoken)) {
 	         /* If there was an error queueing the received byte,
 		     * freeze. */
-		    while(1);
+		    taskYIELD();
 		}
 	}
 	else {
@@ -109,10 +109,10 @@ int main()
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
 
 	serial_rx_queue = xQueueCreate(1, sizeof(serial_msg));
-	/* Create a task to output text read from romfs. */
+	/* Create a shell task */
 	xTaskCreate(shell_task,
 	            (signed portCHAR *) "Shell ENV",
-	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
+	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 5, NULL);
 
 	/* Start running the tasks. */
 	vTaskStartScheduler();
