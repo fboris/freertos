@@ -6,6 +6,7 @@ enum CMD_TYPE{
 	CMD_HELP = 0,
 	CMD_ECHO,
 	CMD_PS,
+	CMD_TEST
 };
 
 void shell_task(void *pvParameters);
