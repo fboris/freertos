@@ -3,6 +3,8 @@
 /* Linenoise and shell includes. */
 #include "linenoise.h"
 #include "shell.h"
+/*semi-host*/
+#include "host.h"
 
 typedef int (*cmd_func_t)(int argc, char *argv);
 
@@ -14,16 +16,18 @@ struct cmd_t
 };
 
 typedef struct cmd_t cmd_entry;
-
+//TODO: enum return value
 static int help_menu(int argc, char *argv);
 static int echo_cmd(int argc, char *argv);
 static int ps_cmd(int argc, char *argv);
 static int test_cmd(int argc, char *argv);
+static int callhost_cmd(int argc, char *argv);
 static cmd_entry available_cmds[] = {
         [CMD_HELP] = {.name = "help",.description  = "Show availabe commands.", .handler = help_menu},
         [CMD_ECHO] =  {.name = "echo",.description  = "Show words you input.",.handler = echo_cmd },
         [CMD_PS] = {.name = "ps",.description  = "List All current process.",.handler = ps_cmd},
-        [CMD_TEST] = {.name = "test",.description  = "Test some function.",.handler = test_cmd}
+        [CMD_TEST] = {.name = "test",.description  = "Test some function.",.handler = test_cmd},
+        [CMD_CALLHOST] = {.name = "host", .description = "call host's commands",.handler = callhost_cmd}
   
 };
 static int test_cmd(int argc, char *argv)
@@ -84,6 +88,30 @@ static int ps_cmd(int argc, char *argv)
     vTaskList(buf);
     puts(buf);
     return 0;
+}
+static int callhost_cmd(int argc, char *argv)
+{
+    /*move ptr to point the word next to 't'*/
+    argv += strlen(available_cmds[CMD_CALLHOST].name);
+    /*allow the command type host[space][space]....*/
+    for(; *argv; argv++){
+        if ( *argv == '\0')
+            break;
+        else if ( *argv ==' '){
+            continue;
+        }
+        else
+            return -1;
+
+    }
+    //TODO:Act like login other user(root). 
+    char * host_str;
+    printf("You invoked semi-host!\r\n");
+    host_str = linenoise("MyShell@HOST>> ");
+    host_system(host_str, strlen(host_str));
+    printf("Back to normal mode!\r\n");
+    return 0;
+    
 }
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
     

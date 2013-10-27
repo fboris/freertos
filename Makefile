@@ -16,7 +16,7 @@ FREERTOS_PORT_INC = $(FREERTOS_SRC)/portable/GCC/ARM_$(ARCH)/
 
 all: main.bin
 
-main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io.c util.c fio.c
+main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io.c util.c fio.c host.c
 	$(CROSS_COMPILE)gcc \
 		-I. -I$(FREERTOS_INC) -I$(FREERTOS_PORT_INC) \
 		-I$(CODEBASE)/libraries/CMSIS/CM3/CoreSupport \
@@ -27,6 +27,7 @@ main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io
 		-gdwarf-2 -g3 \
 		-mcpu=cortex-m3 -mthumb \
 		-c \
+		-DUSE_SEMIHOST\
 		\
 		$(CMSIS_LIB)/CoreSupport/core_cm3.c \
 		$(CMSIS_PLAT_SRC)/system_stm32f10x.c \
@@ -57,6 +58,7 @@ main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io
 		osdebug.c \
 		string.c \
 		\
+		host.c\
 		linenoise.c \
 		\
 		memory_op.c\
@@ -89,6 +91,7 @@ main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io
 		string.o \
 		\
 		linenoise.o \
+		host.o\
 		\
 		memory_op.o\
 		\
@@ -113,24 +116,27 @@ test-romfs.o: mkromfs
 
 
 qemu: main.bin $(QEMU_STM32)
-	$(QEMU_STM32) -M stm32-p103 -kernel main.bin
+	$(QEMU_STM32) -M stm32-p103 -kernel main.bin -semihosting
 
 qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
-		-kernel main.bin
+		-kernel main.bin\
+		-semihosting
 
 gdbauto: main.bin
 	$(QEMU_STM32) -M stm32-p103 \
 		-gdb tcp::3333 -S \
-		-kernel main.bin  &
+		-kernel main.bin\
+		-semihosting &
 	$(CROSS_COMPILE)gdb -x gdb.in 
 
 qemuauto: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 \
 	              -kernel main.bin \
 	              -parallel none \
-		      -serial stdio \
-	              -monitor tcp:localhost:4444,server,nowait
+		      		-serial stdio \
+	              -monitor tcp:localhost:4444,server,nowait\
+	              -semihosting
 clean:
 	rm -f *.o *.elf *.bin *.list mkromfs
