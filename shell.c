@@ -6,7 +6,7 @@
 /*semi-host*/
 #include "host.h"
 
-typedef int (*cmd_func_t)(int argc, char *argv);
+typedef enum CMD_RETURN_TYPE (*cmd_func_t)(int argc, char *argv);
 
 struct cmd_t
 {
@@ -17,11 +17,11 @@ struct cmd_t
 
 typedef struct cmd_t cmd_entry;
 //TODO: enum return value
-static int help_menu(int argc, char *argv);
-static int echo_cmd(int argc, char *argv);
-static int ps_cmd(int argc, char *argv);
-static int test_cmd(int argc, char *argv);
-static int callhost_cmd(int argc, char *argv);
+static CMD_RETURN_TYPE help_menu(int argc, char *argv);
+static CMD_RETURN_TYPE echo_cmd(int argc, char *argv);
+static CMD_RETURN_TYPE ps_cmd(int argc, char *argv);
+static CMD_RETURN_TYPE test_cmd(int argc, char *argv);
+static CMD_RETURN_TYPE callhost_cmd(int argc, char *argv);
 static cmd_entry available_cmds[] = {
         [CMD_HELP] = {.name = "help",.description  = "Show availabe commands.", .handler = help_menu},
         [CMD_ECHO] =  {.name = "echo",.description  = "Show words you input.",.handler = echo_cmd },
@@ -30,11 +30,11 @@ static cmd_entry available_cmds[] = {
         [CMD_CALLHOST] = {.name = "host", .description = "call host's commands",.handler = callhost_cmd}
   
 };
-static int test_cmd(int argc, char *argv)
+static CMD_RETURN_TYPE test_cmd(int argc, char *argv)
 {
     
     if( strlen(argv) != strlen(available_cmds[CMD_HELP].name))
-        return -1;
+        return CMD_FAILED;
     puts("start test printf!\r\n");
     
     char buf[8]={0};
@@ -48,13 +48,13 @@ static int test_cmd(int argc, char *argv)
     printf("test utoa: 100=%s, -100=%s\r\n", utoa(100, buf, 10), utoa(-100, buf2, 10));
     printf("test itoa: 100=%s, -100=%s\r\n", itoa(100, buf, 10), itoa(-100, buf2, 10));
 
-    return 0;
+    return CMD_SUCCESS;
 }
-static int help_menu(int argc, char *argv)
+static CMD_RETURN_TYPE help_menu(int argc, char *argv)
 {
      /*help only support list all commands now.*/
     if( strlen(argv) != strlen(available_cmds[CMD_HELP].name))
-        return -1;
+        return CMD_FAILED;
     int i;
     puts("Name\tDescription\r\n");
     for (i = 0;i < sizeof(available_cmds)/sizeof(cmd_entry) ; i++){
@@ -63,13 +63,13 @@ static int help_menu(int argc, char *argv)
         puts(available_cmds[i].description);
         puts("\r\n");
     }
-    return 0;
+    return CMD_SUCCESS;
 }
-static int echo_cmd(int argc, char *argv)
+static CMD_RETURN_TYPE echo_cmd(int argc, char *argv)
 {
     /*There must be  a space after "echo" string*/
     if( argv[strlen(available_cmds[CMD_ECHO].name)] != ' ')
-        return -1;
+        return CMD_FAILED;
     argv += strlen(available_cmds[CMD_ECHO].name) + 1;
 
     for(; *argv; argv++){
@@ -80,16 +80,16 @@ static int echo_cmd(int argc, char *argv)
     }
     puts(argv);
     puts("\r\n");
-    return 0; 
+    return CMD_SUCCESS; 
 }
-static int ps_cmd(int argc, char *argv)
+static CMD_RETURN_TYPE ps_cmd(int argc, char *argv)
 {
     char buf[1024]={0};
     vTaskList(buf);
     puts(buf);
-    return 0;
+    return CMD_SUCCESS;
 }
-static int callhost_cmd(int argc, char *argv)
+static CMD_RETURN_TYPE callhost_cmd(int argc, char *argv)
 {
     /*move ptr to point the word next to 't'*/
     argv += strlen(available_cmds[CMD_CALLHOST].name);
@@ -101,7 +101,7 @@ static int callhost_cmd(int argc, char *argv)
             continue;
         }
         else
-            return -1;
+            return CMD_FAILED;
 
     }
     //TODO:Act like login other user(root). 
@@ -110,7 +110,7 @@ static int callhost_cmd(int argc, char *argv)
     host_str = linenoise("MyShell@HOST>> ");
     host_system(host_str, strlen(host_str));
     printf("Back to normal mode!\r\n");
-    return 0;
+    return CMD_SUCCESS;
     
 }
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
@@ -132,7 +132,7 @@ static void proc_cmd(char *cmd)
     for (i = 0; i < sizeof(available_cmds)/sizeof(cmd_entry); i++) {
         if (strncmp(cmd, available_cmds[i].name, strlen(available_cmds[i].name)) == 0) {
             /*check command*/
-            if(available_cmds[i].handler(0, cmd) == -1)
+            if(available_cmds[i].handler(0, cmd) == CMD_FAILED)
                 continue;
             return;
         }

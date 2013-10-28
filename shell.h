@@ -9,7 +9,11 @@ enum CMD_TYPE{
 	CMD_TEST,
 	CMD_CALLHOST
 };
-
+/* Enumeration for command return types. */
+typedef enum CMD_RETURN_TYPE{
+	CMD_SUCCESS = 0,
+	CMD_FAILED = -1
+}CMD_RETURN_TYPE;
 void shell_task(void *pvParameters);
 
 #endif
