@@ -22,12 +22,14 @@ static CMD_RETURN_TYPE echo_cmd(int argc, char *argv);
 static CMD_RETURN_TYPE ps_cmd(int argc, char *argv);
 static CMD_RETURN_TYPE test_cmd(int argc, char *argv);
 static CMD_RETURN_TYPE callhost_cmd(int argc, char *argv);
+static CMD_RETURN_TYPE history_cmd(int argc, char *argv);
 static cmd_entry available_cmds[] = {
         [CMD_HELP] = {.name = "help",.description  = "Show availabe commands.", .handler = help_menu},
         [CMD_ECHO] =  {.name = "echo",.description  = "Show words you input.",.handler = echo_cmd },
         [CMD_PS] = {.name = "ps",.description  = "List All current process.",.handler = ps_cmd},
         [CMD_TEST] = {.name = "test",.description  = "Test some function.",.handler = test_cmd},
-        [CMD_CALLHOST] = {.name = "host", .description = "call host's commands",.handler = callhost_cmd}
+        [CMD_CALLHOST] = {.name = "host", .description = "call host's commands",.handler = callhost_cmd},
+        [CMD_HISTORY] = {.name = "history", .description = "list previous 10 commands",.handler = history_cmd}   
   
 };
 static CMD_RETURN_TYPE test_cmd(int argc, char *argv)
@@ -112,6 +114,17 @@ static CMD_RETURN_TYPE callhost_cmd(int argc, char *argv)
     printf("Back to normal mode!\r\n");
     return CMD_SUCCESS;
     
+}
+static CMD_RETURN_TYPE history_cmd(int argc, char *argv)
+{
+    /*history only support list all commands now.*/
+    if ( strlen(argv) != strlen(available_cmds[CMD_HISTORY].name))
+        return CMD_FAILED;
+    if (linenoiseGetHistory() == 0)
+        return CMD_FAILED;
+    else
+        return CMD_SUCCESS;
+
 }
 void linenoise_completion(const char *buf, linenoiseCompletions *lc) {
     

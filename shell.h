@@ -7,7 +7,8 @@ enum CMD_TYPE{
 	CMD_ECHO,
 	CMD_PS,
 	CMD_TEST,
-	CMD_CALLHOST
+	CMD_CALLHOST,
+	CMD_HISTORY
 };
 /* Enumeration for command return types. */
 typedef enum CMD_RETURN_TYPE{

@@ -311,7 +311,6 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     /* The latest history entry is always our current buffer, that
      * initially is just an empty string. */
     linenoiseHistoryAdd("");
-    history_len++;
     puts(prompt);
     while(1) {
     	char c;
@@ -462,4 +461,18 @@ int linenoiseHistoryAdd(const char *line) {
     history_len++;
     return 1;
 }
+int linenoiseGetHistory(){
 
+    if ( (history == NULL) || (history_len <=0) ) return 0;
+
+    int i;
+    puts("list previous 10 commands");
+    for (i = 0 ; i < 10 ; i++){
+        printf("%d : %s\r\n",i,history[history_len - i]);
+    }
+
+    
+    return 1;
+
+
+}

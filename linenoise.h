@@ -14,6 +14,6 @@ void linenoiseAddCompletion(linenoiseCompletions *, char *);
 char *linenoise(const char *prompt);
 int linenoiseHistoryAdd(const char *line);
 void linenoiseClearScreen(void);
-
+int linenoiseGetHistory();
 
 #endif

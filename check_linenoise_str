@@ -1,6 +1,17 @@
 file main.elf
 target remote :3333
-b linenoise.c:linenoise
-b string.c:strdup
-b shell.c:echo_cmd
+#b linenoise.c:linenoise
+#b string.c:strdup
+#b shell.c:echo_cmd
+#b linenoise.c:linenoiseEdit
+b shell.c:165
+b linenoise.c:linenoiseHistoryAdd
+commands 1
+	printf "shell_str = %s\n",shell_str
+	c
+end
+commands 2
+	printf "history length = %d\n",history_len
+	c
+end
 c
