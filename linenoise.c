@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "util.h"
 #include "linenoise.h"
 /*FreeRTOS relative */
 #include "FreeRTOS.h"

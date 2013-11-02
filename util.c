@@ -1,4 +1,17 @@
 #include <string.h> 
+/*FreeRTOS relative */
+#include "FreeRTOS.h"
+void *pvPortRealloc(void *ptr, size_t len)
+{
+  void *new_ptr;
+  new_ptr = (void*)pvPortMalloc(len);
+
+  if(new_ptr) {
+    memcpy(new_ptr, ptr, len);
+    vPortFree(ptr);
+    return new_ptr; 
+  }
+}
 
 char *utoa(unsigned int num, char *dst, unsigned int base)
 {

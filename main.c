@@ -13,6 +13,7 @@
 /* Filesystem relative */
 #include "filesystem.h"
 #include "fio.h"
+#include "romfs.h"
 /*shell enviroment*/
 #include "shell.h"
 
