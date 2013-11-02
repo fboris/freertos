@@ -1,5 +1,6 @@
 #include <stdlib.h>
-
+/*FreeRTOS relative */
+#include "FreeRTOS.h"
 void *pvPortRealloc(void *ptr, size_t len)
 {
 	void *new_ptr;

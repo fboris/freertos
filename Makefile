@@ -28,7 +28,7 @@ main.bin: test-romfs.o main.c linenoise.c string.c memory_op.c shell.c serial_io
 		-mcpu=cortex-m3 -mthumb \
 		-c \
 		-DUSE_SEMIHOST\
-		\
+		-Wall\
 		$(CMSIS_LIB)/CoreSupport/core_cm3.c \
 		$(CMSIS_PLAT_SRC)/system_stm32f10x.c \
 		$(CMSIS_PLAT_SRC)/startup/gcc_ride7/startup_stm32f10x_md.s \

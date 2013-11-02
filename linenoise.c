@@ -5,8 +5,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "linenoise.h"  
+#include "linenoise.h"
+/*FreeRTOS relative */
+#include "FreeRTOS.h"
+/*Filesystem relative */
 #include "fio.h"
+/*Serial IO*/
 #include "serial_io.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100

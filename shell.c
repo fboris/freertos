@@ -1,8 +1,13 @@
-#include "fio.h"
 #include "string.h"
-/* Linenoise and shell includes. */
-#include "linenoise.h"
 #include "shell.h"
+#include "util.h"
+/*FreeRTOS relative */
+#include "FreeRTOS.h"
+#include "task.h"
+/*Filesystem relative */
+#include "fio.h"
+/*Linenoise */
+#include "linenoise.h"
 /*semi-host*/
 #include "host.h"
 

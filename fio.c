@@ -2,15 +2,21 @@
 #include <stdint.h>
 #include <stdarg.h> 
 #include <limits.h>
+#include <unistd.h>
+#include "util.h"
+/*FreeRTOS relative */
 #include <FreeRTOS.h>
 #include <semphr.h>
-#include <unistd.h>
+/* Filesystem relative */
 #include "fio.h"
 #include "filesystem.h"
 #include "osdebug.h"
 #include "hash-djb2.h"
+/*Serial IO*/
 #include "serial_io.h"
-#include "util.h"
+
+
+
 
 extern serial_ops serial;
 
