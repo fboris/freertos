@@ -11,6 +11,8 @@ void *pvPortRealloc(void *ptr, size_t len)
     vPortFree(ptr);
     return new_ptr; 
   }
+
+  return NULL;
 }
 
 char *utoa(unsigned int num, char *dst, unsigned int base)
