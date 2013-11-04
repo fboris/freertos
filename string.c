@@ -92,16 +92,16 @@ char *strchr(const char *s, int c)
 
 char *strcpy(char *dest, const char *src)
 {
-	const unsigned char *s = src;
-	unsigned char *d = dest;
+	const unsigned char *s = (unsigned char *)src;
+	unsigned char *d = (unsigned char*)dest;
 	while ((*d++ = *s++));
 	return dest;
 }
 
 char *strncpy(char *dest, const char *src, size_t n)
 {
-	const unsigned char *s = src;
-	unsigned char *d = dest;
+	const unsigned char *s = (unsigned char *) src;
+	unsigned char *d = (unsigned char *) dest;
 	while (n-- && (*d++ = *s++));
 	return dest;
 }
