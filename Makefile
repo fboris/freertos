@@ -29,6 +29,7 @@ main.bin: test-romfs.o main.c linenoise.c string.c shell.c serial_io.c util.c fi
 		-c \
 		-DUSE_SEMIHOST\
 		-Wall\
+		-std=c99 -pedantic\
 		$(CMSIS_LIB)/CoreSupport/core_cm3.c \
 		$(CMSIS_PLAT_SRC)/system_stm32f10x.c \
 		$(CMSIS_PLAT_SRC)/startup/gcc_ride7/startup_stm32f10x_md.s \
