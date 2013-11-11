@@ -4,7 +4,7 @@ QEMU_STM32 ?= ~/workspace/qemu_stm32/arm-softmmu/qemu-system-arm
 ARCH=CM3
 VENDOR=ST
 PLAT=STM32F10x
-CODEBASE= freertos
+CODEBASE= .
 CMSIS_LIB=$(CODEBASE)/libraries/CMSIS/$(ARCH)
 STM32_LIB=$(CODEBASE)/libraries/STM32F10x_StdPeriph_Driver
 
