@@ -323,4 +323,56 @@ void STM_EVAL_COMInit(COM_TypeDef COM, USART_InitTypeDef* USART_InitStruct)
 }
 //END COMM PORT
 
+void init_rs232()
+{
+  USART_InitTypeDef USART_InitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  /* Enable GPIO clock */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+
+  /* Connect PXx to USARTx_Tx*/
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_USART2);
+  /* Connect PXx to USARTx_Rx*/
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
+
+  /* Configure USART Rx as alternate function  */
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* Configure USART Tx as alternate function  */
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* Configure the USART1 */
+  USART_StructInit(&USART_InitStructure);
+  USART_Init(USART2, &USART_InitStructure);
+    
+  /* Enable USART */
+  USART_Cmd(USART2, ENABLE);
+}
+void enable_rs232_interrupts(void)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+
+    /* Enable transmit and receive interrupts for the USART2. */
+    USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
+    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+    /* Enable the USART2 IRQ in the NVIC module (so that the USART2 interrupt
+     * handler is enabled). */
+    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+    USART_Cmd(USART2, ENABLE);
+}
+
+
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

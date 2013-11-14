@@ -172,8 +172,8 @@ typedef enum
 void STM_EVAL_COMInit(COM_TypeDef COM, USART_InitTypeDef* USART_InitStruct);
 
 //void STM_EVAL_COMInit(COM_TypeDef COM);
-
-
+void init_rs232();
+void enable_rs232_interrupts(void);
 
 
 
