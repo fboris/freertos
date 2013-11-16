@@ -47,7 +47,9 @@ SRC += system_stm32f4xx.c startup_stm32f4xx.s string.c $(LIB)/Utilities/STM32F4-
         $(FREERTOS_SRC)/queue.c\
 		$(FREERTOS_SRC)/tasks.c\
 		$(FREERTOS_SRC)/portable/MemMang/heap_1.c\
-		$(FREERTOS_SRC)/portable/GCC/ARM_$(ARCH)/port.c 
+		$(FREERTOS_SRC)/portable/GCC/ARM_$(ARCH)/port.c\
+		main.c util.c serial_io.c romfs.c hash-djb2.c filesystem.c fio.c \
+        osdebug.c host.c linenoise.c shell.c
 	
 
 all: $(BIN_IMAGE)
@@ -58,7 +60,7 @@ libstm_build:
 $(BIN_IMAGE): $(EXECUTABLE)
 	$(OBJCOPY) -O binary $^ $@
 
-$(EXECUTABLE): main.c $(SRC)
+$(EXECUTABLE): $(SRC)
 	$(CC) $(CFLAGS) $^ -o $@  -L$(LIB)/STM32F4xx_StdPeriph_Driver/build \
 		-lSTM32F4xx_StdPeriph_Driver -L$(C_LIB)
 

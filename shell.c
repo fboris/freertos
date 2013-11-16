@@ -91,10 +91,11 @@ static CMD_RETURN_TYPE echo_cmd(int argc, char *argv)
 }
 static CMD_RETURN_TYPE ps_cmd(int argc, char *argv)
 {
-    signed char buf[1024]={0};
-    //void vTaskList( signed char *pcWriteBuffer )
-    vTaskList(buf);
-    puts( (char *)buf);
+    //FIXME: here has a compilation erro
+    // signed char buf[1024]={0};
+    // //void vTaskList( signed char *pcWriteBuffer )
+    // vTaskList(buf);
+    // puts( (char *)buf);
     return CMD_SUCCESS;
 }
 static CMD_RETURN_TYPE callhost_cmd(int argc, char *argv)
