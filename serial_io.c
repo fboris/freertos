@@ -1,6 +1,6 @@
 /*STM Firmware*/
-#include "stm32_p103.h" 
-#include "stm32f10x.h"
+#include "stm32f4xx_conf.h"
+#include "stm32f4_discovery.h"
 /*FreeRTOS relative */
 #include "FreeRTOS.h"
 #include "task.h"
