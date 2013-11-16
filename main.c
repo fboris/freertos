@@ -19,24 +19,10 @@ void USART2_IRQHandler()
 }
 int main()
 {
-	/*test Led*/
-	STM_EVAL_PBInit(BUTTON_USER, BUTTON_MODE_EXTI); 
-	STM_EVAL_LEDInit(LED3);
-	STM_EVAL_LEDInit(LED4);
-	STM_EVAL_LEDInit(LED5);
-	STM_EVAL_LEDInit(LED6);
-	STM_EVAL_LEDOn(LED3);
-	STM_EVAL_LEDOn(LED4);
-	STM_EVAL_LEDOn(LED5);
-	STM_EVAL_LEDOn(LED6);
+	/*test Led*/ 
 	init_rs232();
 	enable_rs232_interrupts();
-	int i = 0;
-	while(1)
-	{
-
-		for(i=0;i<10000;i++);
-	}
+	while(1);
 	return 0;
 }
 
