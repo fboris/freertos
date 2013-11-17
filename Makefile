@@ -17,7 +17,12 @@ CFLAGS=-g -O2 -mlittle-endian
 CFLAGS+=-mcpu=cortex-m4
 CFLAGS+=-ffreestanding -nostdlib
 CFLAGS+=-mthumb -mfloat-abi=softfp -mfpu=fpv4-sp-d16
-
+CFLAGS+=-fno-common -O0 \
+        -ffreestanding\
+        -gdwarf-2 -g3 \
+        -DUSE_SEMIHOST\
+        -Wall\
+        -std=c99 -pedantic
 
 # to run from FLASH
 CFLAGS+=-Wl,-T,stm32_flash.ld
