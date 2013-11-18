@@ -1,5 +1,5 @@
-EXECUTABLE=STM32F4-Discovery_Demo.elf
-BIN_IMAGE=STM32F4-Discovery_Demo.bin
+EXECUTABLE=main.elf
+BIN_IMAGE=main.bin
 
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
