@@ -75,5 +75,6 @@ clean:
 
 flash:
 	st-flash write $(BIN_IMAGE) 0x8000000
-
-.PHONY: all clean
+openocd: flash 
+	openocd -s /opt/openocd/share/openocd/scripts/
+.PHONY: all clean openocd
