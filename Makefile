@@ -77,4 +77,6 @@ flash:
 	st-flash write $(BIN_IMAGE) 0x8000000
 openocd: flash 
 	openocd -s /opt/openocd/share/openocd/scripts/
-.PHONY: all clean openocd
+gdbauto:
+	arm-none-eabi-gdb -x openocd_gdb.gdb
+.PHONY: all clean openocd gdbauto
