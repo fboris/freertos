@@ -137,3 +137,7 @@ qemuauto: main.bin $(QEMU_STM32)
 	              -semihosting
 clean:
 	rm -f *.o *.elf *.bin *.list mkromfs
+flash:
+	st-flash write main.bin  0x8000000
+openocd: flash
+	openocd -s /opt/openocd/share/openocd/scripts/
